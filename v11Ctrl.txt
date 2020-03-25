@@ -1,0 +1,927 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+using System.Web.Mvc;
+using System.Data;
+using FPS_Measurables.Areas.LIMA.Models;
+using FPS_Measurables.Areas.LIMA.Business;
+using System.Xml;
+using System.Xml.Xsl;
+using System.Text;
+using System.IO;
+
+namespace FPS_Measurables.Areas.LIMA.Controllers
+{
+    public class Variance_R11Controller : Controller
+    {
+        // GET: LIMA/Variance
+
+        public IEnumerable<Variancepartname> Variancepartname1 { get; set; }
+        public ActionResult Load(string report, int desakey, string shiftdate, string EndWeek, int deptsakey, int linesakey, int rptnum, string Shift, int ptsakey, string epdesc, string ptdesc, string engfam)
+        {
+
+            // pass these values from the previous page 
+
+
+            //desakey = Request.QueryString("desakey")
+            //currentdate = Request.QueryString("shiftdate")
+            //endweek = Request.QueryString("endweek")
+            //engfam = Request.QueryString("engfam")
+
+            int[] prodp = new int[10];
+            int[] floatp1 = new int[10];
+            int[] floatp2 = new int[10];
+            int[] floatp3 = new int[10];
+            int[] float1a = new int[10];
+            int[] float2a = new int[10];
+            int[] float3a = new int[10];
+            int[] float1ip = new int[10];
+            int[] float2ip = new int[10];
+            int[] float3ip = new int[10];
+            int mprodall = 0;
+            double hourtotalall = 0;
+            double machJPH = 0;
+            string float1bg = "";
+            string float2bg = "";
+            string float3bg = "";
+            string ftargbg = "";
+
+
+            //for Constraints 
+            int reportid = 100;
+            //string Nodes = "291,567,449,376,612,146,116,592,593,594,595,335,336,337,338";
+            string Nodes = "291,567,449,146,376,612,116,320,321,322,577,578,579";
+
+
+            //string desakey, DateTime currentdate, DateTime endweek, string engfam
+
+
+
+            VarianceViewModal OBjVarianceViewModal = new VarianceViewModal();
+
+            Variance_R11Manager ObjVariance_R11Manager = new Variance_R11Manager();
+            //----------------------------- For Constraints Table ----------------------------------------------------------
+            if (engfam == "D35")
+            {
+                string st = Convert.ToString(Convert.ToDateTime(shiftdate).AddDays(-1));
+                string stMM = DateTime.Parse(st).ToString("MM");
+                string stdd = DateTime.Parse(st).ToString("dd");
+                string stYear = Convert.ToString(DateTime.Parse(st).Year);
+                string StrDate = stMM + "/" + stdd + "/" + stYear + " 11:00:00 PM";
+
+                string currentdt = Convert.ToString(Convert.ToDateTime(shiftdate));
+                string curntMM = DateTime.Parse(currentdt).ToString("MM");
+                string curntdd = DateTime.Parse(currentdt).ToString("dd");
+                string curntYear = Convert.ToString(DateTime.Parse(currentdt).Year);
+
+
+                string EndDate = curntMM + "/" + curntdd + "/" + curntYear + " 11:00:00 PM";
+                //string etDt= Convert.ToString(Convert.ToDateTime(StrDate).AddDays(-1));
+
+
+
+                string getAnotherXML = ObjVariance_R11Manager.GetConstraintsXML(reportid, StrDate, EndDate, Nodes);
+
+                //string strXSLTFile = "F:/data/files/FISdatafiles/FISreport100.xsl";               
+                string strXSLTFile = HttpContext.ApplicationInstance.Server.MapPath(@"~/XML/FISreport100.xsl");
+                string yr = Convert.ToString(DateTime.Parse(shiftdate).Year);
+                string mnth = Convert.ToString(DateTime.Parse(shiftdate).ToString("MM"));
+                string dy = Convert.ToString(DateTime.Parse(shiftdate).ToString("dd"));
+               
+                //string pathXML = "F:/data/files/FISdatafiles/FISdata" + yr + mnth + dy + ".xml";
+                string pathXML = HttpContext.ApplicationInstance.Server.MapPath(@"~/XML/FISdata" + yr + mnth + dy + ".xml");
+
+                string strXMLFile = pathXML;
+                XslCompiledTransform objXSLTransform = new XslCompiledTransform();
+                objXSLTransform.Load(strXSLTFile);
+
+                // Creating StringBuilder object to hold html data and creates TextWriter object to hold data from XslCompiled.Transform method    
+                StringBuilder htmlOutput = new StringBuilder();
+                TextWriter htmlWriter = new StringWriter(htmlOutput);
+
+                // Creating XmlReader object to read XML content    
+                XmlReader reader = XmlReader.Create(strXMLFile);
+
+                // Call Transform() method to create html string and write in TextWriter object.    
+                objXSLTransform.Transform(reader, null, htmlWriter);
+                string strConstraintsRpt = htmlOutput.ToString();
+                StringBuilder HtmltblConstraints = new StringBuilder();
+                HtmltblConstraints.Append("<table cellpadding=0 cellspacing=0 width='95%' align='left' border=1>");
+                HtmltblConstraints.Append("<tr bgcolor='#FFFF33'><td height='30' colspan=3><font size='+1'><b>&nbsp;Constraints</b></font></td></tr>");
+                HtmltblConstraints.Append(strConstraintsRpt);
+                HtmltblConstraints.Append("</table>");
+                HtmltblConstraints.Append("<br clear=all>");
+                HtmltblConstraints.Append("<table>");
+                HtmltblConstraints.Append("<tr height='30'><td>&nbsp;</td></tr>");
+                HtmltblConstraints.Append("</table>");
+
+
+                HtmlString _strConstraintsHTML = new HtmlString(HtmltblConstraints.ToString());
+                OBjVarianceViewModal.strConstraintsTbl = _strConstraintsHTML;
+
+            }
+
+
+            OBjVarianceViewModal.VarianceTitles1 = ObjVariance_R11Manager.GetTitle(desakey, shiftdate, EndWeek);
+            OBjVarianceViewModal.varianceOHSIMCases1 = ObjVariance_R11Manager.GetOHSIMCasesVariance_R11();
+            //OBjVarianceViewModal.VarianceWasteWalkHeader1 = ObjVariance_R11Manager.GetVarianceWasteWalkHeader(EndWeek);
+            //OBjVarianceViewModal.VarianceWasteWalkWgSakey = ObjVariance_R11Manager.GetWasteWalkWgSakey(desakey);
+            OBjVarianceViewModal.Varaiance1stTTRejection1 = ObjVariance_R11Manager.GetVaraiance1stTTRejection(desakey, shiftdate);
+            OBjVarianceViewModal.Variance1stTTRejectionCycleCount = ObjVariance_R11Manager.GetVaraiance1stTTRejectionCyclecount(desakey, shiftdate);
+            OBjVarianceViewModal.Variance1stFTTparts = ObjVariance_R11Manager.Getparts(desakey, shiftdate);
+            OBjVarianceViewModal.Variance1stFTTSummary = ObjVariance_R11Manager.GetFTTSummary(desakey, shiftdate);
+            OBjVarianceViewModal.Variance1stTTFTTPercentage = ObjVariance_R11Manager.getFTTPerc(desakey, shiftdate);
+
+            OBjVarianceViewModal.VarianceMachiningRejects1 = ObjVariance_R11Manager.GetVarianceMachiningRejectsVariance_R11(shiftdate, desakey, deptsakey);
+            OBjVarianceViewModal.VarianceMPALDelivery1 = ObjVariance_R11Manager.GetVarianceMPALDelivery(desakey, deptsakey, shiftdate);
+            OBjVarianceViewModal.VarianceCompliance1 = ObjVariance_R11Manager.GetVarianceCompliance(desakey, shiftdate);
+            OBjVarianceViewModal.VarianceProdSummaryBase1 = ObjVariance_R11Manager.GetVarianceProdSummaryBase();
+
+            OBjVarianceViewModal.VarianceGetPartsOnHold1 = ObjVariance_R11Manager.GetVarianceGetPartsOnHold(desakey);
+            //OBjVarianceViewModal.VarianceDailyEvents1 = ObjVariance_R11Manager.GetVarianceDailyEvents(desakey, shiftdate);
+            OBjVarianceViewModal.VarianceManualDownTime1 = ObjVariance_R11Manager.GetVarianceManualDownTime(desakey, shiftdate);
+            //-->>>>>>>> Delivery - Production Summary
+            OBjVarianceViewModal.VarianceProdSum1 = ObjVariance_R11Manager.GetVarianceProdSum(desakey, shiftdate);
+            //OBjVarianceViewModal.VarianceOverallJPH1 = ObjVariance_R11Manager.GetVarianceOverallJPH(shiftdate, desakey);
+
+
+
+
+            //-------------------------------- Daily Events Start-----------------------------
+            DateTime currentdate1 = Convert.ToDateTime(shiftdate.ToString()).AddDays(-1);
+            string currDt = Convert.ToString(currentdate1.ToString("MM/dd/yyyy")) + " 23:00:00";
+
+            StringBuilder HtmltblDailyEvnts = new StringBuilder();
+
+            DataTable dtRSL1 = ObjVariance_R11Manager.GetRSL1(desakey, currDt);
+
+            if (dtRSL1.Rows.Count > 0)
+            {
+                HtmltblDailyEvnts.Append("<tr><td width='12%' valign='top'><b><u>Date Entered</u></b></td>");
+                HtmltblDailyEvnts.Append("<td width='10%' valign='top'><b><u>Entered By</u></b></td>");
+                HtmltblDailyEvnts.Append("<td width='65%' valign='top' ><b><u>Event / Information</u></b></td>");
+                HtmltblDailyEvnts.Append("</tr>");
+                string dedate = "";
+                string deby = "";
+                string dedesc = "";
+                for (int i = 0; i < dtRSL1.Rows.Count; i++)
+                {
+                    dedate = Convert.ToString(dtRSL1.Rows[i]["ENTRYDATE"].ToString());
+                    deby = Convert.ToString(dtRSL1.Rows[i]["ENTEREDBY"].ToString());
+                    dedesc = Convert.ToString(dtRSL1.Rows[i]["EVENT"].ToString());
+                    HtmltblDailyEvnts.Append("<tr><td valign='top'>" + dedate + "</td>");
+                    HtmltblDailyEvnts.Append("<td valign='top'>" + deby + "</td>");
+                    HtmltblDailyEvnts.Append("<td valign='top'> " + dedesc + "</td></tr>");
+                    HtmltblDailyEvnts.Append("<tr></tr>");
+                }
+            }
+            else
+            {
+                HtmltblDailyEvnts.Append("<tr><td>&nbsp;&nbsp;No Information to Report</td></tr>");
+            }
+
+            HtmlString _HtmltblDailyEvents = new HtmlString(HtmltblDailyEvnts.ToString());
+            OBjVarianceViewModal.HtmltblDailyEvnts = _HtmltblDailyEvents;
+
+
+            //-------------------- WasteWalk new  ---------------------
+
+            StringBuilder HtmltblWasteWalk = new StringBuilder();
+
+            DataTable dtRSS1 = ObjVariance_R11Manager.GetRSS1();
+
+            DateTime cEndWeek1 = Convert.ToDateTime(EndWeek.ToString());
+            DateTime sudate = cEndWeek1;
+            DateTime sadate = cEndWeek1.AddDays(-1);
+            DateTime fdate = cEndWeek1.AddDays(-2);
+            DateTime rdate = cEndWeek1.AddDays(-3);
+            DateTime wdate = cEndWeek1.AddDays(-4);
+            DateTime tdate = cEndWeek1.AddDays(-5);
+            DateTime mdate = cEndWeek1.AddDays(-6);
+            DateTime totdate = Convert.ToDateTime("1/1/1999");
+            int rowcount1 = 0;
+            int metsakey = 0;
+            string metdesc = "";
+            for (int i = 0; i < dtRSS1.Rows.Count; i++)
+            {
+                metsakey = Convert.ToInt32(dtRSS1.Rows[i]["METRIC_SAKEY"].ToString());
+                metdesc = dtRSS1.Rows[i]["METRIC_DESC"].ToString();
+                int mval = 0;
+                int tval = 0;
+                int wval = 0;
+                int rval = 0;
+                int fval = 0;
+                int saval = 0;
+                int suval = 0;
+                int totval = 0;
+                DataTable dtRSS1A = ObjVariance_R11Manager.GetRSS1A(metsakey, EndWeek);
+                if (dtRSS1A.Rows.Count > 0)
+                {
+                    for (int j = 0; j < dtRSS1A.Rows.Count; j++)
+                    {
+                        DateTime metdate = Convert.ToDateTime(dtRSS1A.Rows[j]["METRIC_DATE"].ToString());
+                        if (metdate == mdate)
+                            mval = Convert.ToInt32(dtRSS1A.Rows[j]["METRIC_QTY"].ToString());
+                        else if (metdate == tdate)
+                            tval = Convert.ToInt32(dtRSS1A.Rows[j]["METRIC_QTY"].ToString());
+                        else if (metdate == wdate)
+                            wval = Convert.ToInt32(dtRSS1A.Rows[j]["METRIC_QTY"].ToString());
+                        else if (metdate == rdate)
+                            rval = Convert.ToInt32(dtRSS1A.Rows[j]["METRIC_QTY"].ToString());
+                        else if (metdate == fdate)
+                            fval = Convert.ToInt32(dtRSS1A.Rows[j]["METRIC_QTY"].ToString());
+                        else if (metdate == sadate)
+                            saval = Convert.ToInt32(dtRSS1A.Rows[j]["METRIC_QTY"].ToString());
+                        else if (metdate == sudate)
+                            suval = Convert.ToInt32(dtRSS1A.Rows[j]["METRIC_QTY"].ToString());
+                        else if (metdate == totdate)
+                            totval = Convert.ToInt32(dtRSS1A.Rows[j]["METRIC_QTY"].ToString());
+                    }
+                }
+                rowcount1 = rowcount1 + 1;
+            }
+
+
+
+
+
+
+            DataTable dtRSA = ObjVariance_R11Manager.GetRSA(desakey);
+            DateTime cEndWeek = Convert.ToDateTime(EndWeek.ToString());
+            DateTime suwwdate = cEndWeek;
+            DateTime sawwdate = cEndWeek.AddDays(-1);
+            DateTime fwwdate = cEndWeek.AddDays(-2);
+            DateTime rwwdate = cEndWeek.AddDays(-3);
+            DateTime wwwdate = cEndWeek.AddDays(-4);
+            DateTime twwdate = cEndWeek.AddDays(-5);
+            DateTime mwwdate = cEndWeek.AddDays(-6);
+            string mwwval = "&nbsp";
+            string twwval = "&nbsp";
+            string wwwval = "&nbsp";
+            string rwwval = "&nbsp";
+            string fwwval = "&nbsp";
+            string sawwval = "&nbsp";
+            string suwwval = "&nbsp";
+            HtmltblWasteWalk.Append("<tr>");
+            HtmltblWasteWalk.Append("<td align=center ><b>Work Group</b></td>");
+            HtmltblWasteWalk.Append("<td align=center width='10%'><b>Monday<br>" + mwwdate.ToString("MM/dd/yyyy") + "</b></td>");
+            HtmltblWasteWalk.Append("<td align=center width='10%'><b>Tuesday<br>" + twwdate.ToString("MM/dd/yyyy") + "</b></td>");
+            HtmltblWasteWalk.Append("<td align=center width='10%'><b>Wednesday<br>" + wwwdate.ToString("MM/dd/yyyy") + "</b></td>");
+            HtmltblWasteWalk.Append("<td align=center width='10%'><b>Thursday<br>" + rwwdate.ToString("MM/dd/yyyy") + "</b></td>");
+            HtmltblWasteWalk.Append("<td align=center width='10%'><b>Friday<br>" + fwwdate.ToString("MM/dd/yyyy") + "</b></td>");
+            HtmltblWasteWalk.Append("<td align=center width='10%'><b>Saturday<br>" + sawwdate.ToString("MM/dd/yyyy") + "</b></td>");
+            HtmltblWasteWalk.Append("<td align=center width='10%'><b>Sunday<br>" + suwwdate.ToString("MM/dd/yyyy") + "</b></td>");
+            HtmltblWasteWalk.Append("</tr>");
+
+
+            int workgroup = 0;
+            string teamdesc = "";
+            for (int i = 0; i < dtRSA.Rows.Count; i++)
+            {
+                workgroup = Convert.ToInt32(dtRSA.Rows[i]["Workgroup_sakey"].ToString());
+                teamdesc = Convert.ToString(dtRSA.Rows[i]["Team_description"].ToString());
+                DataTable dtRSA1 = ObjVariance_R11Manager.GetRSA1(EndWeek, workgroup);
+                if (dtRSA1.Rows.Count > 0)
+                {
+                    for (int j = 0; j < dtRSA1.Rows.Count; j++)
+                    {
+                        mwwval = "&nbsp";
+                        twwval = "&nbsp";
+                        wwwval = "&nbsp";
+                        rwwval = "&nbsp";
+                        fwwval = "&nbsp";
+                        sawwval = "&nbsp";
+                        suwwval = "&nbsp";
+                        string compdate = Convert.ToString(dtRSA1.Rows[j]["DateCreated"].ToString());
+                        if (compdate == null || compdate == "")
+                        {
+                            compdate = "1/1/2000";
+                        }
+                        DateTime compdate1 = Convert.ToDateTime(compdate.ToString());
+                        if (compdate1 == mwwdate)
+                            mwwval = "X";
+                        else if (compdate1 == twwdate)
+                            twwval = "X";
+                        else if (compdate1 == wwwdate)
+                            wwwval = "X";
+                        else if (compdate1 == rwwdate)
+                            rwwval = "X";
+                        else if (compdate1 == fwwdate)
+                            fwwval = "X";
+                        else if (compdate1 == sawwdate)
+                            sawwval = "X";
+                        else if (compdate1 == suwwdate)
+                            suwwval = "X";
+                    }
+                }
+
+                HtmltblWasteWalk.Append("<tr><td>&nbsp;&nbsp;" + teamdesc + "</td>");
+                HtmltblWasteWalk.Append("<td align='center'>" + mwwval + "</td>");
+                HtmltblWasteWalk.Append("<td align='center'>" + twwval + "</td>");
+                HtmltblWasteWalk.Append("<td align='center'>" + wwwval + "</td>");
+                HtmltblWasteWalk.Append("<td align='center'>" + rwwval + "</td>");
+                HtmltblWasteWalk.Append("<td align='center'>" + fwwval + "</td>");
+                HtmltblWasteWalk.Append("<td align='center'>" + sawwval + "</td>");
+                HtmltblWasteWalk.Append("<td align='center'>" + suwwval + "</td>");
+                HtmltblWasteWalk.Append("</tr>");
+            }
+            HtmlString _HTmlStrWasteWalk = new HtmlString(HtmltblWasteWalk.ToString());
+            OBjVarianceViewModal.HTmlStrWasteWalk = _HTmlStrWasteWalk;
+
+
+            //------------- Delivery Production Summary New ------------------
+            StringBuilder HtmltblDelProdSummary = new StringBuilder();
+
+
+            hourtotalall = 0;
+            Double prodtotalall = 0;
+            Double shift2prodtotal = 0; 
+            Double shift3prodtotal = 0;
+            Double shift2hourtotal = 0;
+            Double shift3hourtotal = 0;
+            Double shift2jphtotal = 0;
+            Double shift3jphtotal = 0;
+            Double shiftjphtotalall = 0;
+
+            DataTable dtRSE1 = ObjVariance_R11Manager.GetRSE1(desakey);
+            if (dtRSE1.Rows.Count > 0)
+            {
+
+
+                HtmltblDelProdSummary.Append("<tr>");
+                HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+                HtmltblDelProdSummary.Append("<th class='text-center'>Shift</th>");
+                HtmltblDelProdSummary.Append("<th class='text-center'>Prod</th>");
+                HtmltblDelProdSummary.Append("<th class='text-center'>Ctl Hrs</th>");
+                HtmltblDelProdSummary.Append("<th class='text-center'>Act Float</th>");
+                HtmltblDelProdSummary.Append("<th class='text-center'>JPH</th>");
+                HtmltblDelProdSummary.Append("</tr>");
+                for (int i = 0; i < dtRSE1.Rows.Count; i++)
+                {
+                    int ptsakey1 = Convert.ToInt32(dtRSE1.Rows[i]["PART_TYPE_SAKEY"].ToString());
+                    string ptname1 = Convert.ToString(dtRSE1.Rows[i]["PART_TYPE_NAME"].ToString());
+                    DataTable dtRSE2 = ObjVariance_R11Manager.GetRSE2(desakey, ptsakey1, shiftdate);
+                    if (dtRSE2.Rows.Count > 0)
+                    {
+                        int rowcount = 0;
+                        Double prodtotal = 0;
+                        Double hourtotal = 0;
+                        Double shift2prod = 0;
+                        Double shift2hours = 0;
+                        Double shift3prod = 0;
+                        Double shift3hours = 0;
+
+                        int shift1 = 0;
+                        double prod1 = 0;
+                        double hours1 = 0;
+                        double float1 = 0;
+
+                        double shiftjphtotal = 0;
+                        for (int j = 0; j < dtRSE2.Rows.Count; j++)
+                        {
+                            shift1 = Convert.ToInt32(dtRSE2.Rows[j]["SHIFT"].ToString());
+                            if (dtRSE2.Rows[j]["PARTS_SOLD"].ToString() == null || dtRSE2.Rows[j]["PARTS_SOLD"].ToString() == "")
+                                prod1 = 0;
+                            else
+                                prod1 = Convert.ToDouble(dtRSE2.Rows[j]["PARTS_SOLD"].ToString());
+                            if (dtRSE2.Rows[j]["HOURS"].ToString() == null || dtRSE2.Rows[j]["HOURS"].ToString() == "")
+                                hours1 = 0;
+                            else
+                                hours1 = Convert.ToDouble(dtRSE2.Rows[j]["HOURS"].ToString());
+
+                            float1 = Convert.ToDouble(dtRSE2.Rows[j]["FLOAT_COUNT"].ToString());
+                            double shiftjph = 0;
+                            if (hours1 != 0 && prod1 != 0)
+                            {
+                                shiftjph = prod1 / hours1;
+                                shiftjph = Convert.ToDouble(string.Format("{0:0.00}", shiftjph));
+                            }
+                            else
+                            {
+                                shiftjph = 0;
+                            }
+                            if (rowcount != 0)
+                            {
+                                ptname1 = "";
+                            }
+                            HtmltblDelProdSummary.Append("<tr>");
+                            HtmltblDelProdSummary.Append("<td>&nbsp;&nbsp;" + ptname1 + "</td>");
+                            HtmltblDelProdSummary.Append("<td align='center'>" + shift1 + "</td>");
+                            HtmltblDelProdSummary.Append("<td align='center'>" + prod1 + "&nbsp;</td>");
+                            HtmltblDelProdSummary.Append("<td align='center'>" + hours1 + "&nbsp;</td>");
+                            HtmltblDelProdSummary.Append("<td align='center'>" + float1 + "&nbsp;</td>");
+                            HtmltblDelProdSummary.Append("<td align='center'>" + shiftjph + "</td>");
+                            HtmltblDelProdSummary.Append("</tr>");
+                            rowcount = rowcount + 1;
+                            prodtotal = prodtotal + prod1;
+
+                            hourtotal = hourtotal + hours1;
+                            hourtotalall = hourtotalall + hours1;
+
+
+
+                            if (prod1 != 0)
+                                prodtotalall = prodtotalall + prod1;
+                            if (hourtotal != 0 && prodtotal != 0)
+                            {
+                                shiftjphtotal = prodtotal / hourtotal;
+                                shiftjphtotal = Convert.ToDouble(String.Format("{0:0.00}", shiftjphtotal));
+                            }
+                            else
+                            {
+                                shiftjphtotal = 0;
+                            }
+                            if (shift1 == 2)
+                            {
+                                shift2prod = shift2prod + prod1;
+                                shift2hours = shift2hours + hours1;
+                            }
+                            if (shift1 == 3)
+                            {
+                                shift3prod = shift3prod + prod1;
+                                shift3hours = shift3hours + hours1;
+                            }
+
+                        }
+                        //RSE2 LOOP END
+
+
+                        HtmltblDelProdSummary.Append(" <tr>");
+                        HtmltblDelProdSummary.Append("<td><b>" + ptname1 + "&nbsp;&nbsp;TOTAL:</b></td>");
+                        HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+                        HtmltblDelProdSummary.Append("<td align='center'><b>" + prodtotal + "&nbsp;</b></td>");
+                        HtmltblDelProdSummary.Append("<td align='center'><b>" + hourtotal + "&nbsp;</b></td>");
+                        HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+                        HtmltblDelProdSummary.Append("<td align='center'><b>" + shiftjphtotal + "&nbsp;</b></td>");
+                        HtmltblDelProdSummary.Append("</tr>");
+                        shift2prodtotal = shift2prodtotal + shift2prod;
+                        shift3prodtotal = shift3prodtotal + shift3prod;
+                        shift2hourtotal = shift2hourtotal + shift2hours;
+                        shift3hourtotal = shift3hourtotal + shift3hours;
+
+
+                    }
+                    else
+                    {
+                        HtmltblDelProdSummary.Append("<tr>");
+                        HtmltblDelProdSummary.Append("<td>&nbsp;&nbsp;" + ptname1 + "</td>");
+                        HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+                        HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+                        HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+                        HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+                        HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+                        HtmltblDelProdSummary.Append("</tr>");
+                    }
+
+                }
+            }
+
+
+            if (hourtotalall != 0)
+            {
+                shiftjphtotalall = prodtotalall / hourtotalall;
+                shiftjphtotalall = Convert.ToDouble(String.Format("{0:0.00}", shiftjphtotalall));
+            }
+            if (shift2hourtotal != 0)
+            {
+                shift2jphtotal = shift2prodtotal / shift2hourtotal;
+                shift2jphtotal = Convert.ToDouble(String.Format("{0:0.0}", shift2jphtotal));
+            }
+
+            if (shift3hourtotal != 0)
+            {
+                shift3jphtotal = shift3prodtotal / shift3hourtotal;
+                shift3jphtotal = Convert.ToDouble(String.Format("{0:0.0}", shift3jphtotal));
+            }
+            HtmltblDelProdSummary.Append("<tr bgcolor='#CCFFFF'>");
+            HtmltblDelProdSummary.Append("<td><b>GRAND TOTAL:</b></td>");
+            HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+            HtmltblDelProdSummary.Append("<td align='center'><b>" + prodtotalall + "&nbsp;</b></td>");
+            HtmltblDelProdSummary.Append("<td align='center'><b>" + hourtotalall + "&nbsp;</b></td>");
+            HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+            HtmltblDelProdSummary.Append("<td align='center'><b>" + shiftjphtotalall + "&nbsp;</b></td>");
+            HtmltblDelProdSummary.Append("</tr>");
+            HtmltblDelProdSummary.Append("</table>");
+
+
+
+            HtmltblDelProdSummary.Append("<table cellpadding='0' cellspacing='0' width='20%' align='left'>");
+            HtmltblDelProdSummary.Append("<tr>");
+            HtmltblDelProdSummary.Append("<td>&nbsp;</td>");
+            HtmltblDelProdSummary.Append("</tr>");
+            HtmltblDelProdSummary.Append("</table>");
+            HtmltblDelProdSummary.Append("<table cellpadding='0' cellspacing='0' width='20%' align='left' border='1'>");
+
+            DataTable dtRSE4 = ObjVariance_R11Manager.GetRSE4(desakey, shiftdate);
+            double JPHv = 0;
+            double hours4all = 0;
+            double parts4all = 0;
+            string hours4 = "";
+            string parts4 = "";
+            string div4 = "";
+            string hdiv4 = "";
+            Double jphv = 0;
+
+
+            if (dtRSE4.Rows.Count > 0)
+            {
+                for (int i = 0; i < dtRSE4.Rows.Count; i++)
+                {
+                    hours4 = Convert.ToString(dtRSE4.Rows[i]["DAILYHRS"].ToString());
+                    parts4 = Convert.ToString(dtRSE4.Rows[i]["DAILYPARTS"].ToString());
+                    div4 = Convert.ToString(dtRSE4.Rows[i]["DIVISOR"].ToString());
+                    hdiv4 = Convert.ToString(dtRSE4.Rows[i]["HRS_DIVISOR"].ToString());
+                    if (hours4 != "")
+                    {
+                        hours4all = hours4all + Convert.ToDouble(hours4);
+                    }
+                    if (parts4 != "")
+                    {
+                        parts4all = parts4all + Convert.ToDouble(parts4);
+                    }
+                }
+                if (hours4all != 0)
+                {
+                    jphv = parts4all / hours4all / Convert.ToDouble(div4) / Convert.ToDouble(hdiv4);
+                    if (jphv != 0)
+                    {
+                        jphv = Convert.ToDouble(String.Format("{0:0.0}", jphv));
+                    }
+                }
+            }
+
+            DataTable dtDE_Team = ObjVariance_R11Manager.GetDE_TEAM(desakey);
+            int deptsakey1 = 0;
+            if (dtDE_Team.Rows.Count > 0)
+            {
+                deptsakey1 = Convert.ToInt32(dtDE_Team.Rows[0]["DEPT_SAKEY"].ToString());
+            }
+
+            if ((deptsakey1 != 45256) && (deptsakey1 != 25761))
+            {
+                HtmltblDelProdSummary.Append("<tr bgcolor='#CCFFFF'>");
+                HtmltblDelProdSummary.Append("<th class='text-center'>Overall JPH</th>");
+                HtmltblDelProdSummary.Append("</tr>");
+                HtmltblDelProdSummary.Append("<tr>");
+                HtmltblDelProdSummary.Append("<th class='text-center'><font size='+3'>" + jphv + "</font></th>");
+                HtmltblDelProdSummary.Append("</tr>");
+            }
+            else
+            {
+                HtmltblDelProdSummary.Append("<tr bgcolor='#CCFFFF'>");
+                HtmltblDelProdSummary.Append("<th class='text-center'>2nd Shift Overall JPH</th>");
+                HtmltblDelProdSummary.Append("</tr>");
+                HtmltblDelProdSummary.Append("<tr>");
+                HtmltblDelProdSummary.Append("<th class='text-center'><font size='+3'>" + shift2jphtotal + "</font></th>");
+                HtmltblDelProdSummary.Append("</tr>");
+                HtmltblDelProdSummary.Append("<tr bgcolor='#CCFFFF'>");
+                HtmltblDelProdSummary.Append("<th class='text-center'>3rd Shift Overall JPH</th>");
+                HtmltblDelProdSummary.Append("</tr>");
+                HtmltblDelProdSummary.Append("<tr>");
+                HtmltblDelProdSummary.Append("<th class='text-center'><font size='+3'>" + shift3jphtotal + "</font></th>");
+                HtmltblDelProdSummary.Append("</tr>");
+            }
+
+
+            HtmlString _HtmlDelProdSum = new HtmlString(HtmltblDelProdSummary.ToString());
+            OBjVarianceViewModal.HtmlDelProdSum = _HtmlDelProdSum;
+
+
+
+
+
+
+
+
+
+
+
+
+            //Production summery table Start
+            OBjVarianceViewModal.Variancepartname1 = ObjVariance_R11Manager.GetVariancepartname(desakey);
+
+            Variancepartname1 = ObjVariance_R11Manager.GetVariancepartname(desakey);
+            DataTable LType = ObjVariance_R11Manager.GetLType(desakey);
+            string strLtype = "";
+            if (LType.Rows.Count > 0)
+            {
+                strLtype = Convert.ToString(LType.Rows[0]["Type"].ToString()).Trim();
+            }
+            OBjVarianceViewModal.strLtype = strLtype;
+
+            if (strLtype == "MACH")
+            {
+                DataTable dt = ObjVariance_R11Manager.GetVariancepartdata(desakey, shiftdate);
+
+                int parprev = 0;
+                string strtable = "";
+                int partmarker = 0;
+                int mprodtotal = 0;
+                int ftarg = 0;
+                int parname = 0;
+                double machJPHt = 0;
+
+                if (OBjVarianceViewModal.VarianceProdSum1.Count() != 0)
+                {
+                    foreach (var items in OBjVarianceViewModal.VarianceProdSum1)
+                    {
+                        double hours = Convert.ToDouble(items.hours);
+                        //hourtotalall = hourtotalall + hours;
+                    }
+                }
+
+                if (dt.Rows.Count > 0 || dt != null)
+                {
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        partmarker = 0;
+                        mprodtotal = 0;
+                        string opname = row["EQUIP_CODE"].ToString();
+                        parname = Convert.ToInt32(row["PARALLEL_EQUIP"].ToString().Trim());
+                        string eqsakey = row["EQUIP_SAKEY"].ToString();
+                        bool fflag = Convert.ToBoolean(row["FLOAT_FLAG"].ToString());
+                        if (row["FLOAT_TARG"].ToString() != "")
+                        {
+                            ftarg = Convert.ToInt32(row["FLOAT_TARG"].ToString());
+                        }
+
+                        if (ftarg < 1)
+                        {
+                            ftarg = 0;
+                        }
+
+                        if (parprev != 0 && (Convert.ToString(parprev) != Convert.ToString(parname)))
+                        //if (parname.Trim() == "0")
+                        {
+                            strtable = strtable + "<tr><td><small>&nbsp;&nbsp; TOTAL for " + parprev + ":</small></td>";
+                            int _count = 1;
+                            foreach (var _row in Variancepartname1)
+                            {
+                                strtable = strtable + "<td align='center'><small>" + prodp[_count] + "</small></td>";
+                                strtable = strtable + "<td align='center'><small>" + floatp1[_count] + "</small></td>";
+                                strtable = strtable + "<td align='center'><small>" + floatp2[_count] + "</small></td>";
+                                strtable = strtable + "<td align='center'><small>" + floatp3[_count] + "</small></td>";
+
+                                prodp[_count] = 0;
+                                floatp1[_count] = 0;
+                                floatp2[_count] = 0;
+                                floatp3[_count] = 0;
+                                _count = _count + 1;
+                            }
+
+                            if (hourtotalall != 0)
+                            {
+                                //machJPHt = Math.Round(mprodall / hourtotalall,2);
+                                decimal dec = Convert.ToDecimal(mprodall) / Convert.ToDecimal(hourtotalall);
+                                machJPHt = Convert.ToDouble(String.Format("{0:0.00}", dec));
+                                // machJPHt = Math.Round(machJPHt, 2);
+                            }
+
+                            strtable = strtable + "<td align='center'><small>&nbsp;</small></td><td align='center'><small>" + mprodall + "</small></td><td align='center'><small>" + machJPHt + "</small></td></tr>";
+                            mprodall = 0;
+                            machJPHt = 0;
+                        }
+
+                        if (1 == 1)
+                        {
+                            strtable = strtable + "<tr><td><small>&nbsp; &nbsp;" + opname + "</small></td>";
+
+                            foreach (var _row in Variancepartname1)
+                            {
+
+                                int ptsakeyx = Convert.ToInt32(_row.PART_TYPE_SAKEY.ToString());
+                                partmarker = partmarker + 1;
+
+                                DataTable _dt = ObjVariance_R11Manager.GetVariancepartdataPT(eqsakey, ptsakeyx, shiftdate);
+
+                                int prodtotal = 0;
+                                int prod = 0;
+                                string _float = "";
+                                string float1 = "";
+                                string float2 = "";
+                                string float3 = "";
+
+                                if (_dt.Rows.Count > 0 || _dt != null)
+                                {
+                                    foreach (DataRow _row2 in _dt.Rows)
+                                    {
+                                        prod = Convert.ToInt32(_row2["PROD"].ToString());
+                                        _float = Convert.ToString(Convert.ToDecimal(_row2["FLOAT"].ToString()));
+                                        int shift = Convert.ToInt32(_row2["SHIFT"].ToString());
+
+                                        if (shift == 1)
+                                        {
+                                            float1 = _float;
+                                        }
+                                        if (shift == 2)
+                                        {
+                                            float2 = _float;
+                                        }
+                                        if (shift == 3)
+                                        {
+                                            float3 = _float;
+                                        }
+
+
+                                        if (Convert.ToInt32(parname) != 0)
+                                        {
+
+                                            prodp[partmarker] = prodp[partmarker] + prod;
+
+                                            if (shift == 1)
+                                            {
+                                                floatp1[partmarker] = floatp1[partmarker] + Convert.ToInt32(float1);
+                                            }
+                                            if (shift == 2)
+                                            {
+                                                floatp2[partmarker] = floatp2[partmarker] + Convert.ToInt32(float2);
+                                            }
+                                            if (shift == 3)
+                                            {
+                                                floatp3[partmarker] = floatp3[partmarker] + Convert.ToInt32(float3);
+                                            }
+                                            mprodall = mprodall + prod;
+                                        }
+
+                                        mprodtotal = mprodtotal + prod;
+
+                                        //if (parname != 0)
+                                        //{
+                                        prodtotal = prodtotal + prod;
+                                        //}
+                                    }
+
+                                }
+
+                                DataTable _dtfloat1 = ObjVariance_R11Manager.GetVariancepartGetfloatdata1(eqsakey);
+                                DataTable _dtfloat2 = ObjVariance_R11Manager.GetVariancepartGetfloatdata2(eqsakey);
+                                if (float1 == "") { float1 = "0"; }
+                                if (float2 == "") { float2 = "0"; }
+                                if (float3 == "") { float3 = "0"; }
+                                if (_dtfloat1.Rows.Count > 0)
+                                {
+                                    float1ip[partmarker] = float1ip[partmarker] + Convert.ToInt32(float1);
+                                    float2ip[partmarker] = float2ip[partmarker] + Convert.ToInt32(float2);
+                                    float3ip[partmarker] = float3ip[partmarker] + Convert.ToInt32(float3);
+                                }
+                                if (_dtfloat2.Rows.Count > 0)
+                                {
+                                    float1a[partmarker] = float1a[partmarker] + Convert.ToInt32(float1);
+                                    float2a[partmarker] = float2a[partmarker] + Convert.ToInt32(float2);
+                                    float3a[partmarker] = float3a[partmarker] + Convert.ToInt32(float3);
+                                }
+
+
+                                if (fflag == false)
+                                {
+                                    if (float1 == "0") { float1 = ""; }
+                                    if (float2 == "0") { float2 = ""; }
+                                    if (float3 == "0") { float3 = ""; }
+                                    float1 = "";
+                                    float2 = "";
+                                    float3 = "";
+                                    ftarg = 0;
+                                    float1bg = "#d3d3d3";
+                                    float2bg = "#d3d3d3";
+                                    float3bg = "#d3d3d3";
+                                    ftargbg = "#d3d3d3";
+                                }
+                                else
+                                {
+                                    if (float1 == "") { float1 = "0"; }
+                                    if (float2 == "") { float2 = "0"; }
+                                    if (float3 == "") { float3 = "0"; }
+                                    float1bg = "#FFFFFF";
+                                    float2bg = "#FFFFFF";
+                                    float3bg = "#FFFFFF";
+                                    ftargbg = "#FFFFFF";
+                                }
+
+                                strtable = strtable + "<td align='center'><small>" + prodtotal + "</small></td><td align='center' bgcolor=" + float1bg + "><small>" + float1 + "</small></td><td align='center' bgcolor=" + float2bg + "><small>" + float2 + "</small></td><td align='center' bgcolor=" + float3bg + "><small>" + float3 + "</small></td>";
+
+
+
+                            }
+
+                            if (hourtotalall != 0)
+                            {
+                                decimal dec = Convert.ToDecimal(mprodtotal) / Convert.ToDecimal(hourtotalall);
+                                machJPH = Convert.ToDouble(String.Format("{0:0.00}", dec));
+                                //machJPH = Math.Round((mprodtotal / hourtotalall), 3);
+                            }
+                            parprev = Convert.ToInt32(parname);
+                            if (ftarg != 0)
+                            {
+                                strtable = strtable + "<td align='center' bgcolor=" + ftargbg + "><small>" + ftarg + "</small></td><td align='center'><small>" + mprodtotal + "</small></td><td align='center'><small>" + machJPH + "</small></td></tr>";
+                            }
+                            else
+                            {
+                                strtable = strtable + "<td align='center' bgcolor=" + ftargbg + "><small> </small></td><td align='center'><small>" + mprodtotal + "</small></td><td align='center'><small>" + machJPH + "</small></td></tr>";
+                            }
+                        }
+
+
+                        machJPHt = machJPHt + machJPH;
+                    }
+
+
+                }
+
+                //In Process Float:
+                strtable = strtable + "<tr><td><small>&nbsp;&nbsp;In Process Float:</small></td>";
+                int ProFl = 1; int FloAss = 1;
+                foreach (var _row in Variancepartname1)
+                {
+                    strtable = strtable + "<td>&nbsp;</td><td align='center'><small>" + float1ip[ProFl] + "</small></td><td align='center'><small>" + float2ip[ProFl] + "</small></td><td align='center'><small>" + float3ip[ProFl] + "</small></td>";
+                    ProFl = ProFl + 1;
+                }
+                strtable = strtable + "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>";
+
+                //Float Ahead of Assembly:
+                strtable = strtable + "<tr><td><small>&nbsp;&nbsp; Float Ahead of Assembly:</small></td>";
+                foreach (var _row in Variancepartname1)
+                {
+                    strtable = strtable + "<td>&nbsp;</td><td align='center'><small>" + float1a[FloAss] + "</small></td><td align='center'><small>" + float2a[FloAss] + "</small></td><td align='center'><small>" + float3a[FloAss] + "</small></td>";
+                    FloAss = FloAss + 1;
+                }
+                strtable = strtable + "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>";
+
+                HtmlString _strHtml = new HtmlString(strtable);
+                OBjVarianceViewModal.strcaltable = _strHtml;
+            }
+            //Production summery table end
+
+            DataSet dtSet1 = ObjVariance_R11Manager.GetVarianceWeekPS(desakey, EndWeek);
+            List<VarianceWeekPS> ListVarianceWeekPS = new List<VarianceWeekPS>();
+            if (dtSet1.Tables[0].Rows.Count > 0)
+            {
+                for (int i = 0; i < dtSet1.Tables[0].Rows.Count; i++)
+                {
+                    VarianceWeekPS objWeekPS = new VarianceWeekPS();
+                    objWeekPS.PART_TYPE_SAKEY = Convert.ToInt32(dtSet1.Tables[0].Rows[i]["PART_TYPE_SAKEY"].ToString());
+                    objWeekPS.PART_TYPE_NAME = dtSet1.Tables[0].Rows[i]["PART_TYPE_NAME"].ToString();
+                    objWeekPS.MONDAY = Convert.ToDouble(dtSet1.Tables[0].Rows[i]["MONDAY"].ToString());
+                    objWeekPS.TUESDAY = Convert.ToDouble(dtSet1.Tables[0].Rows[i]["TUESDAY"].ToString());
+                    objWeekPS.WEDNESDAY = Convert.ToDouble(dtSet1.Tables[0].Rows[i]["WEDNESDAY"].ToString());
+                    objWeekPS.THURSDAY = Convert.ToDouble(dtSet1.Tables[0].Rows[i]["THURSDAY"].ToString());
+                    objWeekPS.FRIDAY = Convert.ToDouble(dtSet1.Tables[0].Rows[i]["FRIDAY"].ToString());
+                    objWeekPS.SATURDAY = Convert.ToDouble(dtSet1.Tables[0].Rows[i]["SATURDAY"].ToString());
+                    objWeekPS.SUNDAY = Convert.ToDouble(dtSet1.Tables[0].Rows[i]["SUNDAY"].ToString());
+                    objWeekPS.TOTAL = Convert.ToDouble(dtSet1.Tables[0].Rows[i]["TOTAL"].ToString());
+
+                    ListVarianceWeekPS.Add(objWeekPS);
+                }
+                //OBjVarianceViewModal.VarianceWeekPS1 = ListVarianceWeekPS;
+            }
+            OBjVarianceViewModal.VarianceWeekPS1 = ListVarianceWeekPS;
+
+
+            //>>>>>>>>>>>>>>>>> Schedule Data <<<<<<<<<<<<<<<<<<<
+            List<VarianceWeekPSschedule> _lstSchedule = new List<VarianceWeekPSschedule>();
+            if (dtSet1.Tables[1].Rows.Count > 0)
+            {
+
+                VarianceWeekPSschedule objSchedule = new VarianceWeekPSschedule();
+                objSchedule.msched = Convert.ToInt32(dtSet1.Tables[1].Rows[0]["msched"].ToString());
+                objSchedule.tsched = Convert.ToInt32(dtSet1.Tables[1].Rows[0]["tsched"].ToString());
+                objSchedule.wsched = Convert.ToInt32(dtSet1.Tables[1].Rows[0]["wsched"].ToString());
+                objSchedule.rsched = Convert.ToInt32(dtSet1.Tables[1].Rows[0]["rsched"].ToString());
+                objSchedule.fsched = Convert.ToInt32(dtSet1.Tables[1].Rows[0]["fsched"].ToString());
+                objSchedule.ssched = Convert.ToInt32(dtSet1.Tables[1].Rows[0]["ssched"].ToString());
+                objSchedule.nsched = Convert.ToInt32(dtSet1.Tables[1].Rows[0]["nsched"].ToString());
+                objSchedule.wtsched = Convert.ToInt32(dtSet1.Tables[1].Rows[0]["wtsched"].ToString());
+                _lstSchedule.Add(objSchedule);
+
+            }
+            OBjVarianceViewModal.VarianceWeekPSschedules = _lstSchedule;
+
+            //>>>>>>>>>>>>>>>>> Delta Data <<<<<<<<<<<<<<<<<<<
+            List<VarianceWeekPSdelta> _lstDelta = new List<VarianceWeekPSdelta>();
+            if (dtSet1.Tables[2].Rows.Count > 0)
+            {
+
+                VarianceWeekPSdelta objDelta = new VarianceWeekPSdelta();
+                objDelta.dmtot = Convert.ToInt32(dtSet1.Tables[2].Rows[0]["dmtot"].ToString());
+                objDelta.dttot = Convert.ToInt32(dtSet1.Tables[2].Rows[0]["dttot"].ToString());
+                objDelta.dwtot = Convert.ToInt32(dtSet1.Tables[2].Rows[0]["dwtot"].ToString());
+                objDelta.dthtot = Convert.ToInt32(dtSet1.Tables[2].Rows[0]["dthtot"].ToString());
+                objDelta.dftot = Convert.ToInt32(dtSet1.Tables[2].Rows[0]["dftot"].ToString());
+                objDelta.dsatot = Convert.ToInt32(dtSet1.Tables[2].Rows[0]["dsatot"].ToString());
+                objDelta.dsutot = Convert.ToInt32(dtSet1.Tables[2].Rows[0]["dsutot"].ToString());
+                objDelta.dweektotal = Convert.ToInt32(dtSet1.Tables[2].Rows[0]["dweektotal"].ToString());
+                _lstDelta.Add(objDelta);
+
+            }
+            OBjVarianceViewModal.VarianceWeekPSdeltas = _lstDelta;
+
+            //OBjVarianceViewModal.VarianceWeekPS1 = ObjVariance_R11Manager.GetVarianceWeekPS(desakey,EndWeek);
+            OBjVarianceViewModal.VarianceWeekPSControlHrs1 = ObjVariance_R11Manager.GetVarianceWeekPSControlHrs(desakey, EndWeek);
+            OBjVarianceViewModal.VarianceWeekPSJPH1 = ObjVariance_R11Manager.GetVarianceWeekPSJPH(desakey, EndWeek);
+
+            return View(OBjVarianceViewModal);
+
+        }
+
+    }
+}

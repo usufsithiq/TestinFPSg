@@ -1,0 +1,1698 @@
+@model  FPS_Measurables.Areas.LIMA.Models.VarianceViewModal
+
+
+@*@{
+        ViewBag.Title = "Load";
+        Layout = "~/Areas/STR/Views/Shared/_LayoutPage.cshtml";
+    }*@
+
+<HTML>
+
+<HEAD>
+    <TITLE>Variance Report for  ViewBag.Message</TITLE>
+    <META NAME="GENERATOR" Content="Microsoft Visual Studio 6.0">
+    <STYLE TYPE="text/css">
+        td {
+            font-size: 10pt
+        }
+
+        th {
+            font-size: 10pt
+        }
+
+        #tblProductionSummery tbody tr th {
+            border: 1px solid gray;
+            padding: 0px;
+            margin: 0px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        #tblProductionSummery tbody tr td {
+            border: 1px solid gray;
+            padding: 0px;
+            margin: 0px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .Tbl11 > tbody > tr:nth-child(even) {
+            background-color: #ffffcc;
+        }
+    </STYLE>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            function divFunction() {
+                var divContents = $("#tblprint").html();
+                var printWindow = window.open("", "printWindow", "");
+                //printWindow.document.write('<!DOCTYPE html><meta http-equiv="X-UA-Compatible" content="IE=Edge"><html><head><link rel="stylesheet" href="jquery-ui.css"><link href="Style.css" rel="stylesheet" />');
+                printWindow.document.write('<!DOCTYPE html><html><head><link rel="stylesheet" href="jquery-ui.css"><link href="Style.css" rel="stylesheet" />');
+                printWindow.document.write('</head><body >');
+                printWindow.document.write(divContents);
+                printWindow.document.write('</body></html>');
+                printWindow.document.close();
+                printWindow.print();
+                printWindow.close();
+                printWindow.document.close();
+            }
+            $(window).keydown(function (event) {
+                if (event.ctrlKey && event.keyCode == 80) {
+                    event.preventDefault();
+                    divFunction();
+                }
+            });
+            $("#btnPrint").click(function () {
+                divFunction();
+            }); 
+        });
+
+    </script>
+
+
+
+</HEAD>
+
+<body>
+    <div class="row">
+        <div class="col-xs-11" style="width:95%">
+            <button class="btn btn-primary btn pull-right" id="btnPrint">Print PDF</button>
+        </div>
+    </div>
+    <div id="tblprint">
+
+        <table width="95%" cellpadding=0 cellspacing=0 align="left">
+            <tr bgcolor="#003399"><td align=center height="50" border=all><font size="+2" color="#FFFFFF"> Shift Summary / Variance Report</font></td></tr>
+            <tr bgcolor="#CCFFFF"><td height="25"><font size="+1"><b>Production Line:&nbsp;&nbsp;&nbsp; @Html.DisplayFor(model => model.VarianceTitles1.Title) </b></font></td></tr>
+            <tr bgcolor="#CCFFFF"><td height="25"><font size="+1"><b>Date:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Html.DisplayFor(model => model.VarianceTitles1.CurrentDate)</b></font></td></tr>
+            <tr height="30"><td>&nbsp;</td></tr>
+        </table>
+        @{
+            //ADO constants include file for VBScript
+            #region
+            //---- CursorTypeEnum Values ----
+            var adOpenForwardOnly = 0;
+            var adOpenKeyset = 1;
+            var adOpenDynamic = 2;
+            var adOpenStatic = 3;
+
+            //---- CursorOptionEnum Values ----
+            var adHoldRecords = "&H00000100";
+            var adMovePrevious = "&H00000200";
+            var adAddNew = "&H01000400";
+            var adDelete = "&H01000800";
+            var adUpdate = "&H01008000";
+            var adBookmark = "&H00002000";
+            var adApproxPosition = "&H00004000";
+            var adUpdateBatch = "&H00010000";
+            var adResync = "&H00020000";
+            var adNotify = "&H00040000";
+            var adFind = "&H00080000";
+            var adSeek = "&H00400000";
+            var adIndex = "&H00800000";
+
+            //'---- LockTypeEnum Values ----
+            var adLockReadOnly = 1;
+            var adLockPessimistic = 2;
+            var adLockOptimistic = 3;
+            var adLockBatchOptimistic = 4;
+
+            //---- ExecuteOptionEnum Values ----
+            var adAsyncExecute = "&H00000010";
+            var adAsyncFetch = "&H00000020";
+            var adAsyncFetchNonBlocking = "&H00000040";
+            var adExecuteNoRecords = "&H00000080";
+            var adExecuteStream = "&H00000400";
+
+            //---- ConnectOptionEnum Values ----
+            var adAsyncConnect = "&H00000010";
+
+            //--- ObjectStateEnum Values ----
+            var adStateClosed = "&H00000000";
+            var adStateOpen = "&H00000001";
+            var adStateConnecting = "&H00000002";
+            var adStateExecuting = "&H00000004";
+            var adStateFetching = "&H00000008";
+
+            //---- CursorLocationEnum Values ----
+            var adUseServer = 2;
+            var adUseClient = 3;
+
+            //---- DataTypeEnum Values ----
+            var adEmpty = 0;
+            var adTinyInt = 16;
+            var adSmallInt = 2;
+            var adInteger = 3;
+            var adBigInt = 20;
+            var adUnsignedTinyInt = 17;
+            var adUnsignedSmallInt = 18;
+            var adUnsignedInt = 19;
+            var adUnsignedBigInt = 21;
+            var adSingle = 4;
+            var adDouble = 5;
+            var adCurrency = 6;
+            var adDecimal = 14;
+            var adNumeric = 131;
+            var adBoolean = 11;
+            var adError = 10;
+            var adUserDefined = 132;
+            var adVariant = 12;
+            var adIDispatch = 9;
+            var adIUnknown = 13;
+            var adGUID = 72;
+            var adDate = 7;
+            var adDBDate = 133;
+            var adDBTime = 134;
+            var adDBTimeStamp = 135;
+            var adBSTR = 8;
+            var adChar = 129;
+            var adVarChar = 200;
+            var adLongVarChar = 201;
+            var adWChar = 130;
+            var adVarWChar = 202;
+            var adLongVarWChar = 203;
+            var adBinary = 128;
+            var adVarBinary = 204;
+            var adLongVarBinary = 205;
+            var adChapter = 136;
+            var adFileTime = 64;
+            var adPropVariant = 138;
+            var adVarNumeric = 139;
+            var adArray = "&H2000";
+
+            //---- FieldAttributeEnum Values ----
+            var adFldMayDefer = "&H00000002";
+            var adFldUpdatable = "&H00000004";
+            var adFldUnknownUpdatable = "&H00000008";
+            var adFldFixed = "&H00000010";
+            var adFldIsNullable = "&H00000020";
+            var adFldMayBeNull = "&H00000040";
+            var adFldLong = "&H00000080";
+            var adFldRowID = "&H00000100";
+            var adFldRowVersion = "&H00000200";
+            var adFldCacheDeferred = "&H00001000";
+            var adFldIsChapter = "&H00002000";
+            var adFldNegativeScale = "&H00004000";
+            var adFldKeyColumn = "&H00008000";
+            var adFldIsRowURL = "&H00010000";
+            var adFldIsDefaultStream = "&H00020000";
+            var adFldIsCollection = "&H00040000";
+
+            //'---- EditModeEnum Values ----;
+            var adEditNone = "&H0000";
+            var adEditInProgress = "&H0001";
+            var adEditAdd = "&H0002";
+            var adEditDelete = "&H0004";
+
+            //'---- RecordStatusEnum Values ----;;
+            var adRecOK = "&H0000000";
+            var adRecNew = "&H0000001";
+            var adRecModified = "&H0000002";
+            var adRecDeleted = "&H0000004";
+            var adRecUnmodified = "&H0000008";
+            var adRecInvalid = "&H0000010";
+            var adRecMultipleChanges = "&H0000040";
+            var adRecPendingChanges = "&H0000080";
+            var adRecCanceled = "&H0000100";
+            var adRecCantRelease = "&H0000400";
+            var adRecConcurrencyViolation = "&H0000800";
+            var adRecIntegrityViolation = "&H0001000";
+            var adRecMaxChangesExceeded = "&H0002000";
+            var adRecObjectOpen = "&H0004000";
+            var adRecOutOfMemory = "&H0008000";
+            var adRecPermissionDenied = "&H0010000";
+            var adRecSchemaViolation = "&H0020000";
+            var adRecDBDeleted = "&H0040000";
+
+            //'---- GetRowsOptionEnum Values ----;;
+            var adGetRowsRest = -1;
+
+            //'---- PositionEnum Values ----;;
+            var adPosUnknown = -1;
+            var adPosBOF = -2;
+            var adPosEOF = -3;
+
+            //'---- BookmarkEnum Values ----;;
+            var adBookmarkCurrent = 0;
+            var adBookmarkFirst = 1;
+            var adBookmarkLast = 2;
+
+            //'---- MarshalOptionsEnum Values ----;;
+            var adMarshalAll = 0;
+            var adMarshalModifiedOnly = 1;
+
+            //'---- AffectEnum Values ----;;
+            var adAffectCurrent = 1;
+            var adAffectGroup = 2;
+            var adAffectAllChapters = 4;
+
+            //'---- ResyncEnum Values ----;;
+            var adResyncUnderlyingValues = 1;
+            var adResyncAllValues = 2;
+
+            //'---- CompareEnum Values ----;
+            var adCompareLessThan = 0;
+            var adCompareEqual = 1;
+            var adCompareGreaterThan = 2;
+            var adCompareNotEqual = 3;
+            var adCompareNotComparable = 4;
+
+            //'---- FilterGroupEnum Values ----
+            var adFilterNone = 0;
+            var adFilterPendingRecords = 1;
+            var adFilterAffectedRecords = 2;
+            var adFilterFetchedRecords = 3;
+            var adFilterConflictingRecords = 5;
+
+            //'---- SearchDirectionEnum Values ----
+            var adSearchForward = 1;
+            var adSearchBackward = -1;
+
+            //---- PersistFormatEnum Values ----
+            var adPersistADTG = 0;
+            var adPersistXML = 1;
+
+            //'---- StringFormatEnum Values ----;
+            var adClipString = 2;
+
+            //'---- ConnectPromptEnum Values ----
+            var adPromptAlways = 1;
+            var adPromptComplete = 2;
+            var adPromptCompleteRequired = 3;
+            var adPromptNever = 4;
+
+            //'---- ConnectModeEnum Values ----;
+            var adModeUnknown = 0;
+            var adModeRead = 1;
+            var adModeWrite = 2;
+            var adModeReadWrite = 3;
+            var adModeShareDenyRead = 4;
+            var adModeShareDenyWrite = 8;
+            var adModeShareExclusive = "&Hc";
+            var adModeShareDenyNone = "&H10";
+            var adModeRecursive = "&H400000";
+
+            //'---- RecordCreateOptionsEnum Values ----
+            var adCreateCollection = "&H00002000";
+            var adCreateStructDoc = "&H80000000";
+            var adCreateNonCollection = "&H00000000";
+            var adOpenIfExists = "&H02000000";
+            var adCreateOverwrite = "&H04000000";
+            var adFailIfNotExists = -1;
+
+            //'---- RecordOpenOptionsEnum Values ----
+            var adOpenRecordUnspecified = -1;
+            var adOpenOutput = "&H00800000";
+            var adOpenAsync = "&H00001000";
+            var adDelayFetchStream = "&H00004000";
+            var adDelayFetchFields = "&H00008000";
+            var adOpenExecuteCommand = "&H00010000";
+
+            //---- IsolationLevelEnum Values ----
+            var adXactUnspecified = "&Hffffffff";
+            var adXactChaos = "&H00000010";
+            var adXactReadUncommitted = "&H00000100";
+            var adXactBrowse = "&H00000100";
+            var adXactCursorStability = "&H00001000";
+            var adXactReadCommitted = "&H00001000";
+            var adXactRepeatableRead = "&H00010000";
+            var adXactSerializable = "&H00100000";
+            var adXactIsolated = "&H00100000";
+
+            //---- XactAttributeEnum Values ----
+            var adXactCommitRetaining = "&H00020000";
+            var adXactAbortRetaining = "&H00040000";
+
+            //'---- PropertyAttributesEnum Values ----
+            var adPropNotSupported = "&H0000";
+            var adPropRequired = "&H0001";
+            var adPropOptional = "&H0002";
+            var adPropRead = "&H0200";
+            var adPropWrite = "&H0400";
+
+            //'---- ErrorValueEnum Values ----
+            var adErrProviderFailed = "&Hbb8";
+            var adErrInvalidArgument = "&Hbb9";
+            var adErrOpeningFile = "&Hbba";
+            var adErrReadFile = "&Hbbb";
+            var adErrWriteFile = "&Hbbc";
+            var adErrNoCurrentRecord = "&Hbcd";
+            var adErrIllegalOperation = "&Hc93";
+            var adErrCantChangeProvider = "&Hc94";
+            var adErrInTransaction = "&Hcae";
+            var adErrFeatureNotAvailable = "&Hcb3";
+            var adErrItemNotFound = "&Hcc1";
+            var adErrObjectInCollection = "&Hd27";
+            var adErrObjectNotSet = "&Hd5c";
+            var adErrDataConversion = "&Hd5d";
+            var adErrObjectClosed = "&He78";
+            var adErrObjectOpen = "&He79";
+            var adErrProviderNotFound = "&He7a";
+            var adErrBoundToCommand = "&He7b";
+            var adErrInvalidParamInfo = "&He7c";
+            var adErrInvalidConnection = "&He7d";
+            var adErrNotReentrant = "&He7e";
+            var adErrStillExecuting = "&He7f";
+            var adErrOperationCancelled = "&He80";
+            var adErrStillConnecting = "&He81";
+            var adErrInvalidTransaction = "&He82";
+            var adErrUnsafeOperation = "&He84";
+            var adwrnSecurityDialog = "&He85";
+            var adwrnSecurityDialogHeader = "&He86";
+            var adErrIntegrityViolation = "&He87";
+            var adErrPermissionDenied = "&He88";
+            var adErrDataOverflow = "&He89";
+            var adErrSchemaViolation = "&He8a";
+            var adErrSignMismatch = "&He8b";
+            var adErrCantConvertvalue = "&He8c";
+            var adErrCantCreate = "&He8d";
+            var adErrColumnNotOnThisRow = "&He8e";
+            var adErrURLIntegrViolSetColumns = "&He8f";
+            var adErrURLDoesNotExist = "&He8f";
+            var adErrTreePermissionDenied = "&He90";
+            var adErrInvalidURL = "&He91";
+            var adErrResourceLocked = "&He92";
+            var adErrResourceExists = "&He93";
+            var adErrCannotComplete = "&He94";
+            var adErrVolumeNotFound = "&He95";
+            var adErrOutOfSpace = "&He96";
+            var adErrResourceOutOfScope = "&He97";
+            var adErrUnavailable = "&He98";
+            var adErrURLNamedRowDoesNotExist = "&He99";
+            var adErrDelResOutOfScope = "&He9a";
+            var adErrPropInvalidColumn = "&He9b";
+            var adErrPropInvalidOption = "&He9c";
+            var adErrPropInvalidValue = "&He9d";
+            var adErrPropConflicting = "&He9e";
+            var adErrPropNotAllSettable = "&He9f";
+            var adErrPropNotSet = "&Hea0";
+            var adErrPropNotSettable = "&Hea1";
+            var adErrPropNotSupported = "&Hea2";
+            var adErrCatalogNotSet = "&Hea3";
+            var adErrCantChangeConnection = "&Hea4";
+            var adErrFieldsUpdateFailed = "&Hea5";
+            var adErrDenyNotSupported = "&Hea6";
+            var adErrDenyTypeNotSupported = "&Hea7";
+            var adErrProviderNotSpecified = "&Hea9";
+            var adErrConnectionStringTooLong = "&Heaa";
+
+            //'---- ParameterAttributesEnum Values ----
+            var adParamSigned = "&H0010";
+            var adParamNullable = "&H0040";
+            var adParamLong = "&H0080";
+
+            //---- ParameterDirectionEnum Values ----
+            var adParamUnknown = "&H0000";
+            var adParamInput = "&H0001";
+            var adParamOutput = "&H0002";
+            var adParamInputOutput = "&H0003";
+            var adParamReturnValue = "&H0004";
+
+            //---- CommandTypeEnum Values ----
+            var adCmdUnknown = "&H0008";
+            var adCmdText = "&H0001";
+            var adCmdTable = "&H0002";
+            var adCmdStoredProc = "&H0004";
+            var adCmdFile = "&H0100";
+            var adCmdTableDirect = "&H0200";
+
+            //'---- EventStatusEnum Values ----
+            var adStatusOK = "&H0000001";
+            var adStatusErrorsOccurred = "&H0000002";
+            var adStatusCantDeny = "&H0000003";
+            var adStatusCancel = "&H0000004";
+            var adStatusUnwantedEvent = "&H0000005";
+
+            //'---- EventReasonEnum Values ----;
+            var adRsnAddNew = 1;
+            var adRsnDelete = 2;
+            var adRsnUpdate = 3;
+            var adRsnUndoUpdate = 4;
+            var adRsnUndoAddNew = 5;
+            var adRsnUndoDelete = 6;
+            var adRsnRequery = 7;
+            var adRsnResynch = 8;
+            var adRsnClose = 9;
+            var adRsnMove = 10;
+            var adRsnFirstChange = 11;
+            var adRsnMoveFirst = 12;
+            var adRsnMoveNext = 13;
+            var adRsnMovePrevious = 14;
+            var adRsnMoveLast = 15;
+
+            //---- SchemaEnum Values ----
+            var adSchemaProviderSpecific = -1;
+            var adSchemaAsserts = 0;
+            var adSchemaCatalogs = 1;
+            var adSchemaCharacterSets = 2;
+            var adSchemaCollations = 3;
+            var adSchemaColumns = 4;
+            var adSchemaCheckConstraints = 5;
+            var adSchemaConstraintColumnUsage = 6;
+            var adSchemaConstraintTableUsage = 7;
+            var adSchemaKeyColumnUsage = 8;
+            var adSchemaReferentialConstraints = 9;
+            var adSchemaTableConstraints = 10;
+            var adSchemaColumnsDomainUsage = 11;
+            var adSchemaIndexes = 12;
+            var adSchemaColumnPrivileges = 13;
+            var adSchemaTablePrivileges = 14;
+            var adSchemaUsagePrivileges = 15;
+            var adSchemaProcedures = 16;
+            var adSchemaSchemata = 17;
+            var adSchemaSQLLanguages = 18;
+            var adSchemaStatistics = 19;
+            var adSchemaTables = 20;
+            var adSchemaTranslations = 21;
+            var adSchemaProviderTypes = 22;
+            var adSchemaViews = 23;
+            var adSchemaViewColumnUsage = 24;
+            var adSchemaViewTableUsage = 25;
+            var adSchemaProcedureParameters = 26;
+            var adSchemaForeignKeys = 27;
+            var adSchemaPrimaryKeys = 28;
+            var adSchemaProcedureColumns = 29;
+            var adSchemaDBInfoKeywords = 30;
+            var adSchemaDBInfoLiterals = 31;
+            var adSchemaCubes = 32;
+            var adSchemaDimensions = 33;
+            var adSchemaHierarchies = 34;
+            var adSchemaLevels = 35;
+            var adSchemaMeasures = 36;
+            var adSchemaProperties = 37;
+            var adSchemaMembers = 38;
+            var adSchemaTrustees = 39;
+            var adSchemaFunctions = 40;
+            var adSchemaActions = 41;
+            var adSchemaCommands = 42;
+            var adSchemaSets = 43;
+
+            //---- FieldStatusEnum Values ----
+            var adFieldOK = 0;
+            var adFieldCantConvertValue = 2;
+            var adFieldIsNull = 3;
+            var adFieldTruncated = 4;
+            var adFieldSignMismatch = 5;
+            var adFieldDataOverflow = 6;
+            var adFieldCantCreate = 7;
+            var adFieldUnavailable = 8;
+            var adFieldPermissionDenied = 9;
+            var adFieldIntegrityViolation = 10;
+            var adFieldSchemaViolation = 11;
+            var adFieldBadStatus = 12;
+            var adFieldDefault = 13;
+            var adFieldIgnore = 15;
+            var adFieldDoesNotExist = 16;
+            var adFieldInvalidURL = 17;
+            var adFieldResourceLocked = 18;
+            var adFieldResourceExists = 19;
+            var adFieldCannotComplete = 20;
+            var adFieldVolumeNotFound = 21;
+            var adFieldOutOfSpace = 22;
+            var adFieldCannotDeleteSource = 23;
+            var adFieldReadOnly = 24;
+            var adFieldResourceOutOfScope = 25;
+            var adFieldAlreadyExists = 26;
+            var adFieldPendingInsert = "&H10000";
+            var adFieldPendingDelete = "&H20000";
+            var adFieldPendingChange = "&H40000";
+            var adFieldPendingUnknown = "&H80000";
+            var adFieldPendingUnknownDelete = "&H100000";
+
+            //---- SeekEnum Values ----;
+            var adSeekFirstEQ = "&H1";
+            var adSeekLastEQ = "&H2";
+            var adSeekAfterEQ = "&H4";
+            var adSeekAfter = "&H8";
+            var adSeekBeforeEQ = "&H10";
+            var adSeekBefore = "&H20";
+
+            //---- ADCPROP_UPDATECRITERIA_ENUM Values ----
+            var adCriteriaKey = 0;
+            var adCriteriaAllCols = 1;
+            var adCriteriaUpdCols = 2;
+            var adCriteriaTimeStamp = 3;
+
+            //---- ADCPROP_ASYNCTHREADPRIORITY_ENUM Values ----;
+            var adPriorityLowest = 1;
+            var adPriorityBelowNormal = 2;
+            var adPriorityNormal = 3;
+            var adPriorityAboveNormal = 4;
+            var adPriorityHighest = 5;
+
+            //     '---- ADCPROP_AUTORECALC_ENUM Values ----;
+            var adRecalcUpFront = 0;
+            var adRecalcAlways = 1;
+
+            //'---- ADCPROP_UPDATERESYNC_ENUM Values ----;
+            var adResyncNone = 0;
+            var adResyncAutoIncrement = 1;
+            var adResyncConflicts = 2;
+            var adResyncUpdates = 4;
+            var adResyncInserts = 8;
+            var adResyncAll = 15;
+
+            //'---- MoveRecordOptionsEnum Values ----;
+            var adMoveUnspecified = -1;
+            var adMoveOverWrite = 1;
+            var adMoveDontUpdateLinks = 2;
+            var adMoveAllowEmulation = 4;
+
+            //'---- CopyRecordOptionsEnum Values ----
+            var adCopyUnspecified = -1;
+            var adCopyOverWrite = 1;
+            var adCopyAllowEmulation = 4;
+            var adCopyNonRecursive = 2;
+
+            //---- StreamTypeEnum Values ----;
+            var adTypeBinary = 1;
+            var adTypeText = 2;
+
+            //'---- LineSeparatorEnum Values ----;
+            var adLF = 10;
+            var adCR = 13;
+            var adCRLF = -1;
+
+            //---- StreamOpenOptionsEnum Values ----;
+            var adOpenStreamUnspecified = -1;
+            var adOpenStreamAsync = 1;
+            var adOpenStreamFromRecord = 4;
+
+            //'---- StreamWriteEnum Values ----
+            var adWriteChar = 0;
+            var adWriteLine = 1;
+
+            //'---- SaveOptionsEnum Values ----;
+            var adSaveCreateNotExist = 1;
+            var adSaveCreateOverWrite = 2;
+
+            //---- FieldEnum Values ----;
+            var adDefaultStream = -1;
+            var adRecordURL = -2;
+
+            //---- StreamReadEnum Values ----
+            var adReadAll = -1;
+            var adReadLine = -2;
+
+            //---- RecordTypeEnum Values ----;
+            var adSimpleRecord = 0;
+            var adCollectionRecord = 1;
+            var adStructDoc = 2;
+            #endregion
+
+        }
+        @*------------------Safety - Plantwide -->  Safety - Plantwide ----------------*@
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1>
+            <tr bgcolor="#FFFF33"><td height="30" colspan=9><font size="+1"><b>&nbsp;Safety - Plantwide</b></font></td></tr>
+        </table>
+
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="95%" align="left">
+            <tr><td height=10>&nbsp;</td></tr>
+            <tr height="30"><td><font size="3"><b>OHSIM Cases</b></td></tr>
+        </table>
+        <br clear="all">
+
+
+        <table cellpadding=3 cellspacing=0 width="90%" align="left" border=1 ID="Table11" class="Tbl11">
+            <tr>
+                <td width="2%"><b>Item</b></td>
+                <td width="20%"><b>Name</b></td>
+                <td width="5%"><b>Category</b></td>
+                <td align="center"><b>Dept</b></td>
+                <td align="center" width="8%"><b>Date of Injury</b></td>
+                <td align="center" width="8%"><b>Last Day Worked</b></td>
+                <td align="center" width="8%"><b>Expected Return</b></td>
+                <td width="25%"><b>Incident Description</b></td>
+                <td align="center"><b>Status</b></td>
+            </tr>
+
+
+
+            @{ int rowNo = 0; }
+            @if (@Model.varianceOHSIMCases1.Count() == 0)
+            {
+                <tr><td colspan="9" align="center">No Cases to Report</td></tr>
+            }
+            @foreach (var item in @Model.varianceOHSIMCases1)
+            {
+                <tr>
+
+                    <td><font size="-1">   @(rowNo += 1) </font></td>
+                    <td><font size="-1">@item.NAME </font></td>
+                    <td align="center"><font size="-1">@item.casedesc </font></td>
+                    <td align="center"><font size="-1">@item.Dept</font></td>
+                    <td align="center"><font size="-1">@item.doi</font></td>
+                    <td align="center"><font size="-1">@item.lw</font></td>
+                    <td align="center"><font size="-1">@item.rd</font></td>
+                    <td align="left"><font size="-1">@item.comment </font></td>
+                    <td align="center"><font size="-1">@item.statdesc  </font></td>
+                </tr>
+            }
+
+
+
+        </table>
+
+
+        @*------------------Waste Walk Completion ----------------*@
+
+
+
+
+        @*<table cellpadding=0 cellspacing=0 width="50%" align="left">
+                <tr><td height=10>&nbsp;</td></tr>
+                <br clear=all>
+                <br />
+                <tr height="15"><td><font size="3"><b>Waste Walk Completion</b></font></td></tr>
+            </table>
+            <br clear="all">
+            <table cellpadding=0 cellspacing=3 width="70%" align="left" border=1>
+
+                <tr>
+                    <td><b>Work Group</b></td>
+                    <td align=center width="10%"><b>Monday<br> @Html.DisplayFor(model => model.VarianceWasteWalkHeader1.Monday)</b></td>
+                    <td align=center width="10%"><b>Tuesday<br>@Html.DisplayFor(model => model.VarianceWasteWalkHeader1.Tuesday)</b></td>
+                    <td align=center width="10%"><b>Wednesday<br>@Html.DisplayFor(model => model.VarianceWasteWalkHeader1.Wednesday)</b></td>
+                    <td align=center width="10%"><b>Thursday<br>@Html.DisplayFor(model => model.VarianceWasteWalkHeader1.Thursday)</b></td>
+                    <td align=center width="10%"><b>Friday<br>@Html.DisplayFor(model => model.VarianceWasteWalkHeader1.Friday)</b></td>
+                    <td align=center width="10%"><b>Saturday<br>@Html.DisplayFor(model => model.VarianceWasteWalkHeader1.Saturday)</b></td>
+                    <td align=center width="10%"><b>Sunday<br>@Html.DisplayFor(model => model.VarianceWasteWalkHeader1.Sunday)</b></td>
+                </tr>
+                @foreach (var item in @Model.VarianceWasteWalkWgSakey)
+                {
+                    <tr>
+                        <td>@item.Team_Description</td>
+                        <td align="center"></td>
+                        <td align="center"></td>
+                        <td align="center"></td>
+                        <td align="center"></td>
+                        <td align="center"></td>
+                        <td align="center"></td>
+                        <td align="center"></td>
+                    </tr>
+                }
+
+
+            </table>*@
+        @*-------------------------------Waste walk old END -----------------------------*@
+        @*-------------------------- Waste Walk New ----------------------------*@
+        <table cellpadding=0 cellspacing=0 width="50%" align="left">
+            <tr><td height=10>&nbsp;</td></tr>
+            <br clear=all>
+            <br />
+            <tr height="15"><td><font size="3"><b>Waste Walk Completion</b></font></td></tr>
+        </table>
+        <br clear="all">
+        <table cellpadding=0 cellspacing=3 width="70%" align="left" border=1>
+            @Model.HTmlStrWasteWalk
+        </table>
+
+
+        <p style="page-break-before: always"></p>
+        <br clear=all>
+        @*------------------Quality - First Time Through Rejects ----------------*@
+
+
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=0 ID="Table12">
+            <tr><td height="30" colspan=3>&nbsp;</td></tr>
+        </table>
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1>
+            <tr bgcolor="#FFFF33"><td height="30" colspan=3><font size="+1"><b>&nbsp;Quality - First Time Through Rejects</b></font></td></tr>
+        </table>
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="75%" align="left" border=0>
+
+            @{
+                var pName = ""; var rejall = 0; var ccountall = 0; var lastVal = ""; var lastWGSAKEY = 0; var lastOP = ""; var icunt = 0; var itemCnt = 0; var lst = 0;
+                var count2 = 0; var count3 = 0; var TotalCyclCount = 0; var rCount = 0; var prodFTT = 0; decimal FTTcalc = 0; decimal FTTcalcx = 0; decimal FTTcyclediff = 0;
+                var wgName = ""; var CyclCount = false;
+            }
+            <tr>
+                <td width="20%"><b><u>Workgroup</u></b></td>
+                <td width="40%" colspan=3><b><u>Reject Description</u></b></td>
+                <td width="15%" align="center"><b><u>Qty</u></b></td>
+            </tr>
+
+
+            @foreach (var item in @Model.Varaiance1stTTRejection1)
+            {
+                CyclCount = false;
+                icunt += 1;
+                itemCnt = Model.Varaiance1stTTRejection1.Count();
+                if (lastVal != item.twgname && lastVal != "")
+                {
+                    foreach (var itemCCount in @Model.Variance1stTTRejectionCycleCount)
+                    {
+                        if (lastWGSAKEY == itemCCount.WORKGROUP_SAKEY)
+                        {
+                            <tr><td></td><td bgcolor=#ece9d8><b>Cycle Counts</b></td><td bgcolor=#ece9d8><b>2 Tries</b></td><td bgcolor=#ece9d8><b>>=3 Tries</b></td></tr>
+                            CyclCount = true;
+                            break;
+                        }
+                    }
+                    foreach (var NoCyclcount in @Model.Variance1stTTRejectionCycleCount)
+                    {
+                        if (lastWGSAKEY != NoCyclcount.WORKGROUP_SAKEY)
+                        {
+                            if (CyclCount != true)
+                            {
+                                <tr><td></td><td bgcolor=#ece9d8><b>No cycle counts to report</b></td><td bgcolor=#ece9d8>&nbsp;</td><td bgcolor=#ece9d8>&nbsp;</td></tr>
+                                <tr><td height=10></td></tr>
+                                break;
+                            }
+
+                        }
+                    }
+
+                    if (@Model.Variance1stTTRejectionCycleCount.Count() > 0)
+                    {
+                        foreach (var itemCCount in @Model.Variance1stTTRejectionCycleCount)
+                        {
+                            if (lastWGSAKEY == itemCCount.WORKGROUP_SAKEY)
+                            {
+
+                                <tr>
+                                    <td></td>
+                                    <td>@itemCCount.OP_DESC</td>
+                                    <td>@itemCCount.Count2</td>
+                                    <td>@itemCCount.Count3</td>
+                                </tr>
+
+                            }
+                            else
+                            {
+                                @*<tr><td></td><td bgcolor=#ece9d8><b>No cycle counts to report</b></td><td bgcolor=#ece9d8>&nbsp;</td><td bgcolor=#ece9d8>&nbsp;</td></tr>
+                                    continue;*@
+                            }
+
+                        }
+                        <tr><td height=10></td></tr>
+
+                    }
+                    else
+                    {
+                        <tr><td></td><td bgcolor=#ece9d8><b>No cycle counts to report</b></td><td bgcolor=#ece9d8>&nbsp;</td><td bgcolor=#ece9d8>&nbsp;</td></tr>
+                        <tr><td height=10></td></tr>
+                    }
+
+                }
+
+                else
+                {
+
+                }
+
+                <tr>
+                    @if (pName == item.twgname)
+                    {
+                        <td></td>
+                    }
+                    else
+                    {
+                        <td>@item.twgname</td>
+                        pName = item.twgname;
+                    }
+                    @if (item.REJDESC == "")
+                    {
+                        <td colspan=3>No Rejects to Report</td>
+                    }
+                    else
+                    {
+                        <td colspan=3>@item.REJDESC</td>
+                    }
+
+                    <td align="center">@item.REJECTS</td>
+
+                </tr>
+                rejall = rejall + item.REJECTS;
+                lastVal = item.twgname;
+                lastWGSAKEY = item.WG_SAKEY;
+
+
+                CyclCount = false;
+                if (icunt == itemCnt)
+                {
+                    foreach (var itemCCount in @Model.Variance1stTTRejectionCycleCount)
+                    {
+                        if (lastWGSAKEY == itemCCount.WORKGROUP_SAKEY)
+                        {
+                            <tr><td></td><td bgcolor=#ece9d8><b>Cycle Counts</b></td><td bgcolor=#ece9d8><b>2 Tries</b></td><td bgcolor=#ece9d8><b>>=3 Tries</b></td></tr>
+                            CyclCount = true;
+                            break;
+                        }
+
+                    }
+                    foreach (var NoCyclcount in @Model.Variance1stTTRejectionCycleCount)
+                    {
+                        if (lastWGSAKEY != NoCyclcount.WORKGROUP_SAKEY)
+                        {
+                            if (CyclCount != true)
+                            {
+                                <tr><td></td><td bgcolor=#ece9d8><b>No cycle counts to report</b></td><td bgcolor=#ece9d8>&nbsp;</td><td bgcolor=#ece9d8>&nbsp;</td></tr>
+                                <tr><td height=10></td></tr>
+                                break;
+                            }
+
+                        }
+                    }
+                    if (@Model.Variance1stTTRejectionCycleCount.Count() > 0)
+                    {
+                        foreach (var itemCCount in @Model.Variance1stTTRejectionCycleCount)
+                        {
+                            if (lastWGSAKEY == itemCCount.WORKGROUP_SAKEY)
+                            {
+                                <tr>
+                                    <td></td>
+                                    <td>@itemCCount.OP_DESC</td>
+                                    <td>@itemCCount.Count2</td>
+                                    <td>@itemCCount.Count3</td>
+                                </tr>
+
+
+                            }
+                            else
+                            {
+
+                            }
+                        }
+                        <tr><td height=10></td></tr>
+                    }
+                    else
+                    {
+                        <tr><td></td><td bgcolor=#ece9d8><b>No cycle counts to report</b></td><td bgcolor=#ece9d8>&nbsp;</td><td bgcolor=#ece9d8>&nbsp;</td></tr>
+                    }
+
+
+
+
+
+                }
+                else
+                {
+                    @*<tr><td></td><td bgcolor=#ece9d8><b>No cycle counts to report</b></td><td bgcolor=#ece9d8>&nbsp;</td><td bgcolor=#ece9d8>&nbsp;</td></tr>*@
+                }
+
+            }
+            @*---------------Percentage Total Calculation START-----------------------*@
+            @foreach (var itemFFTPerc in Model.Variance1stTTFTTPercentage)
+            {
+                TotalCyclCount = TotalCyclCount + itemFFTPerc.REJ_TOTAL;
+                rCount = rCount + 1;
+            }
+
+            @{
+                prodFTT = Model.Variance1stFTTparts.parts;
+                ccountall = TotalCyclCount - rCount;
+                decimal subValcal = (prodFTT - rejall - ccountall);
+                decimal subValcalcx = (prodFTT - rejall);
+
+                if (prodFTT != 0)
+                {
+                    FTTcalc = (subValcal / prodFTT) * 100;
+                    FTTcalc = Convert.ToDecimal(String.Format("{0:0.00}", FTTcalc));
+
+                    FTTcalcx = (subValcalcx / prodFTT) * 100;
+                    FTTcalcx = Convert.ToDecimal(String.Format("{0:0.00}", FTTcalcx));
+                    FTTcyclediff = (FTTcalcx - FTTcalc);
+                    FTTcyclediff = Convert.ToDecimal(String.Format("{0:0.00}", FTTcyclediff));
+                }
+
+
+            }
+            @*<tr><td></td><td bgcolor=#ece9d8><b>Cycle Counts</b></td><td bgcolor=#ece9d8><b>2 Tries</b></td><td bgcolor=#ece9d8><b>>=3 Tries</b></td></tr>*@
+
+            @*<td></td>
+                <td>All Stations Good</td>
+                <td>&nbsp;</td>
+                <td>&nbsp;</td></tr>*@
+
+            <tr><td>&nbsp;</td></tr>
+            <tr><td></td><td colspan=3></td><td align="right"><b>FTT% =@FTTcalc </b></td></tr>
+            <tr><td></td><td colspan=3></td><td align="right"><b>Multi Cycle Loss % = @FTTcyclediff</b></td></tr>
+            <tr height="30"><td>&nbsp;</td></tr>
+            @*//-----------------------Percentage Total Calculation END-----------------------*@
+
+        </table>
+        <br clear=all>
+
+        @{
+            var prodFTT1 = Model.Variance1stFTTparts.parts;
+            var TotalRejects = 0;
+            var TotalRetries = 0;
+        }
+
+
+
+        @if (@Model.Variance1stFTTSummary.Count() > 0)
+        {
+            if ((@Model.Variance1stFTTSummary.FirstOrDefault().LTYPE) == "ASY")
+            {
+                <table cellpadding=0 cellspacing=0 width="40%" align="center" border=1 ID="Table7">
+                    <tr bgcolor="#CCFFFF"><th align="center" colspan="5" class="text-center">FTT Summary</th></tr>
+                    <tr><td><b>Team</b></td><td align="center"><b>Total Rejects</b></td><td align="center"><b>Total Retries</b></td><td align="center"><b>Team %</b></td><td align="center"><b>Retry %</b></td></tr>
+                    @foreach (var itemFTTSum in @Model.Variance1stFTTSummary)
+                    {
+                        decimal wgFTT = 0;
+                        decimal subVal2 = 0;
+                        decimal wgFTTx = 0;
+                        decimal wgCYC = 0;
+                        if (prodFTT1 != 0)
+                        {
+                            decimal subVal = (prodFTT1 - itemFTTSum.REJECTS - itemFTTSum.REJ_TOTAL1);
+                            wgFTT = subVal / prodFTT1;
+                            wgFTT = wgFTT * 100;
+                            wgFTT = Convert.ToDecimal(String.Format("{0:0.00}", wgFTT));
+
+                            subVal2 = prodFTT1 - itemFTTSum.REJECTS;
+                            subVal2 = (subVal2 / prodFTT1) * 100;
+                            wgFTTx = Convert.ToDecimal(String.Format("{0:0.00}", subVal2));
+                            wgCYC = wgFTTx - wgFTT;
+                            wgCYC = Convert.ToDecimal(String.Format("{0:0.00}", wgCYC));
+                        }
+
+                        <tr>
+                            <td>@itemFTTSum.WORKGROUP_NAME</td>
+                            <td align="center">@itemFTTSum.REJECTS</td>
+                            <td align="center">@itemFTTSum.REJ_TOTAL1</td>
+                            @if (prodFTT1 != 0)
+                            {
+                                <td align="center">@wgFTT</td>
+                                <td align="center">@wgCYC</td>
+                            }
+                            else
+                            {
+                                <td align="center"></td>
+                                <td align="center"></td>
+                            }
+
+
+
+                        </tr>
+                        TotalRejects = TotalRejects + itemFTTSum.REJECTS;
+                        TotalRetries = TotalRetries + @itemFTTSum.REJ_TOTAL1;
+                    }
+
+                    <tr><td><b>Totals</b></td><td align="center">@TotalRejects</td><td align="center">@TotalRetries</td><td>&nbsp;</td><td>&nbsp;</td></tr>
+                </table>
+            }
+        }
+        @*------------------Quality - Machining Rejects to Assembly ----------------*@
+
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1>
+            <tr bgcolor="#FFFF33"><td height="30" colspan=3><font size="+1"><b>&nbsp;Quality - Machining Rejects to Assembly</b></font></td></tr>
+        </table>
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="60%" align="left">
+
+            <tr><td><b><u>Part</u></b></td><td><b><u>Reject Description</u></b></td><td align="center"><b><u>Total</u></b></td><td align="center"><b><u>Reported By</u></b></td></tr>
+
+            @if (@Model.VarianceMachiningRejects1.Count() == 0)
+            {
+                <tr><td colspan="6" align="center">No Rejects to Report</td></tr>
+            }
+
+            @foreach (var item in @Model.VarianceMachiningRejects1)
+            {
+                <tr><td>@item.PART_TYPE</td><td>@item.AREJ_DESC</td><td align="center">@item.DEF_TOTAL</td><td align="center">@item.REPORT_BY</td></tr>
+            }
+
+
+
+            <tr height="30"><td>&nbsp;</td></tr>
+        </table>
+        <p style="page-break-before: always"></p>
+
+        <br clear=all>
+        @*------------------Delivery - MP&L Delivery Issues---------------*@
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1>
+            <tr bgcolor="#FFFF33"><td height="30" colspan=3><font size="+1"><b>&nbsp;Delivery - MP&#038;L Delivery Issues</b></font></td></tr>
+        </table>
+        <br clear=all>
+
+        <table cellpadding=0 cellspacing=0 width="90%" align="left">
+
+
+            <tr><td><b><u>Team</u></b></td><td><b><u>Issue Description</u></b></td><td align="center"><b><u>Incident Start Time</u></b></td><td align="center"><b><u>Incident Duration</u></b></td><td align="center"><b><u>Reported By</u></b></td></tr>
+            @if (@Model.VarianceMPALDelivery1.Count() == 0)
+            {
+                <tr style="text-align:center"><td colspan="4">No Rejects to Report</td></tr>
+            }
+
+            @foreach (var item in @Model.VarianceMPALDelivery1)
+            {
+                <tr>
+                    <td>@item.Team</td>
+                    <td>@item.IssueDescription</td>
+                    <td align="center">@item.IncidentStartTime</td>
+                    <td align="center">@item.IncidentDuration</td>
+                    <td align="center">@item.ReportedBy</td>
+                </tr>
+                @*<tr><td>@item.Team</td><td>@item.rejdesc1&nbsp;-&nbsp; @item.rejdesc1a</td><td align="center">@item.rejstart</td><td align="center">@item.rejdesc2</td><td align="center">@item.rptby</td></tr>*@
+            }
+
+
+            @*<tr><td>&nbsp;&nbsp;No Rejects to Report</td></tr>*@
+
+
+            <tr height="30"><td>&nbsp;</td></tr>
+        </table>
+
+        <br clear=all>
+
+        @*'do following section only for machining
+            if ltype = "MACH" then*@
+
+
+
+        @if (@Model.VarianceCompliance1.Count() > 0)
+        {
+            if ((@Model.VarianceCompliance1.FirstOrDefault().LTYPE) == "MACH")
+            {
+                <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1>
+                    <tr bgcolor="#FFFF33"><td height="30"><font size="+1"><b>&nbsp;Quality - Compliance Checks</b></font></td></tr>
+                </table>
+                <br clear=all>
+                <table cellpadding=0 cellspacing=0 width="15%" align="left">
+                    <tr><td>&nbsp;</td></tr>
+                </table>
+
+
+                <br clear=all>
+                <table cellpadding=0 cellspacing=0 width="90%" align="left" border=0>
+
+
+
+                    <tr><td><b><u>Description</u></b></td><td align="center"><b><u>Shift</u></b></td><td align="center"><b><u>Workgroup</u></b></td><td align="center"><b><u>Created By</u></b></td><td align="center"><b><u>Last Updated By</u></b></td><td align="center"><b><u>Response</u></b></td></tr>
+
+
+                    @foreach (var item in @Model.VarianceCompliance1)
+                    {
+                        <tr>
+                            <td>@item.Description</td>
+                            <td align="center">@item.Shift</td>
+                            <td align="center">@item.Workgroup</td>
+                            <td align="center">@item.CreatedBy</td>
+                            <td align="center">@item.LastUpdatedBy</td>
+
+                            @if (@item.Response == "YES")
+                            {
+                                <td style="text-align:center;color:green">@item.Response</td>
+                            }
+                            @if (@item.Response == "NO")
+                            {
+                                <td style="text-align:center;color:red">@item.Response</td>
+                            }
+
+
+                        </tr>
+
+                        @*<tr><td>@item.checkdesc</td><td align="center">@item.shiftd2</td><td>@item.wgnamed2</td><td align="center">@item.cuserd2&nbsp;&nbsp;@item.cdated2</td><td align="center">@item.uuserd2&nbsp;&nbsp;@item.udated2</td><td align="center">@item.respd2</td></tr>*@
+                    }
+                    @*<tr><td>&nbsp;&nbsp;No Checks to Report</td></tr>*@
+                    <tr height="30"><td>&nbsp;</td></tr>
+                </table>
+            }
+        }
+
+        <p style="page-break-before: always"></p>
+        <br clear=all>
+        @*----------------------------------------Delivery Production Summary Start ----------------------------*@
+
+        @*<table cellpadding=0 cellspacing=0 width="95%" align="left" border=1 ID="Table5">
+                <tr bgcolor="#FFFF33"><td height="30"><font size="+1"><b>&nbsp;Delivery - Production Summary</b></font></td></tr>
+            </table>
+            <br clear=all>
+
+
+
+            <table cellpadding=0 cellspacing=0 width="15%" align="left" ID="Table6">
+                <tr><td>&nbsp;</td></tr>
+            </table>
+            <br clear=all>
+            <table cellpadding=0 cellspacing=0 width="45%" align="left" border=1 ID="Table8">
+
+                <tr>
+                    <td>&nbsp;</td>
+                    <th style="text-align:center">Shift</th>
+                    <th style="text-align:center">Prod</th>
+                    <th style="text-align:center">Ctl Hrs</th>
+                    <th style="text-align:center">Act Float</th>
+                    <th style="text-align:center">JPH</th>
+                </tr>
+
+                @{
+                    var pName2 = "";
+                    var pSakey1 = 0;
+                    var TProd = 0;
+                    Decimal TctrHrs = 0;
+                    Decimal TJPH = 0;
+                    var itemCount = 0;
+                    var icount = 0;
+                    var prodTotal = 0;
+                    Decimal HrsTotal = 0;
+                    Decimal JPHTotal = 0;
+                    Decimal Shift2ProdTotal = 0;
+                    Decimal Shift2HrsTotal = 0;
+                    Decimal Shift3ProdTotal = 0;
+                    Decimal Shift3HrsTotal = 0;
+                    Decimal Shift2OverAllJPH = 0;
+                    Decimal Shift3OverAllJPH = 0;
+                }
+
+                @foreach (var item1 in @Model.VarianceProdSum1)
+                {
+                    icount += 1;
+                    itemCount = Model.VarianceProdSum1.Count();
+                    if (pSakey1 != item1.PART_TYPE_SAKEY && pSakey1 != 0)
+                    {
+
+                        <tr>
+                            <td>&nbsp;&nbsp;<b>TOTAL : </b></td>
+                            <td></td>
+                            <td style="text-align:center;"><b>@TProd</b> &nbsp;</td>
+                            <td style="text-align:center;"><b>@TctrHrs</b> &nbsp;</td>
+                            <td></td>
+                            <td style="text-align:center;"><b>@TJPH</b> &nbsp;</td>
+                        </tr>
+                        TProd = 0;
+                        TctrHrs = 0;
+                        TJPH = 0;
+                    }
+                    <tr>
+                        @if (pName2 == @item1.PART_TYPE_NAME)
+                        {
+                            <td></td>
+                        }
+                        else
+                        {
+                            <td>&nbsp;&nbsp;@item1.PART_TYPE_NAME</td>
+                            pName2 = item1.PART_TYPE_NAME;
+                        }
+
+                        <td align="center">@item1.shift</td>
+                        <td align="center">@item1.prod &nbsp;</td>
+                        <td align="center">@item1.hours &nbsp;</td>
+                        <td align="center">@item1.floatcount &nbsp;</td>
+                        @if (item1.JPH == 0)
+                        {
+                            <td align="center">@item1.JPH</td>
+                        }
+                        else
+                        {
+                            <td align="center">@item1.JPH.ToString("0.00")</td>
+                        }
+
+
+                    </tr>
+                    TProd += item1.prod;
+                    TctrHrs += Convert.ToDecimal(item1.hours);
+                    if (@TctrHrs > 0)
+                    {
+                        TJPH = (@TProd / @TctrHrs);
+                        TJPH = Convert.ToDecimal(String.Format("{0:0.00}", TJPH));
+                    }
+
+                    prodTotal += item1.prod;
+                    HrsTotal += Convert.ToDecimal(item1.hours);
+
+                    if (@HrsTotal > 0)
+                    {
+                        JPHTotal = (@prodTotal / @HrsTotal);
+                    }
+
+                    JPHTotal = Convert.ToDecimal(string.Format("{0:0.00}", JPHTotal));
+
+
+                    //--------------------- Overall JPH for Shiftwise calculation Start---------------
+                    if (item1.shift == "2")
+                    {
+                        Shift2ProdTotal += Convert.ToDecimal(item1.prod);
+                        Shift2HrsTotal += Convert.ToDecimal(item1.hours);
+
+                    }
+                    if (item1.shift == "3")
+                    {
+                        Shift3ProdTotal += Convert.ToDecimal(item1.prod);
+                        Shift3HrsTotal += Convert.ToDecimal(item1.hours);
+                    }
+
+                    //--------------------- Overall JPH for Shiftwise calculation End---------------
+
+
+
+
+                    pSakey1 = item1.PART_TYPE_SAKEY;
+
+                    if (icount == itemCount)
+                    {
+                        <tr>
+                            <td>&nbsp;&nbsp;<b>TOTAL : </b></td>
+                            <td></td>
+                            <td style="text-align:center;"><b>@TProd</b> &nbsp;</td>
+                            <td style="text-align:center;"><b>@TctrHrs</b> &nbsp;</td>
+                            <td></td>
+                            <td style="text-align:center;"><b>@TJPH</b> &nbsp;</td>
+                        </tr>
+                        TProd = 0;
+                        TctrHrs = 0;
+                        TJPH = 0;
+                    }
+
+                }
+
+                <tr bgcolor="#CCFFFF"><td><b>GRAND TOTAL : </b></td><td></td><td style="text-align:center;"><b>@prodTotal</b></td><td style="text-align:center;"><b>@HrsTotal</b></td><td></td><td style="text-align:center;"><b>@JPHTotal</b></td></tr>
+
+
+
+
+            </table>*@
+
+        @*---------------------------------------------------- OVerAll JPH ---------------------------------------------------------------------*@
+
+        @*<table cellpadding=0 cellspacing=0 width="20%" align="left">
+                <tr><td>&nbsp;</td></tr>
+            </table>
+            @if (@Model.VarianceOverallJPH1.OverallJPH == Convert.ToDouble("999999.9"))
+            {
+                if (Shift2HrsTotal != 0)
+                {
+                    Shift2OverAllJPH = (Shift2ProdTotal / Shift2HrsTotal);
+                    Shift2OverAllJPH = Convert.ToDecimal(string.Format("{0:0.0}", Shift2OverAllJPH));
+                }
+                if (Shift3HrsTotal != 0)
+                {
+                    Shift3OverAllJPH = (Shift3ProdTotal / Shift3HrsTotal);
+                    Shift3OverAllJPH = Convert.ToDecimal(string.Format("{0:0.0}", Shift3OverAllJPH));
+                }
+
+
+
+                <table cellpadding=0 cellspacing=0 width="20%" align="left" border=1>
+                    <tr bgcolor="#CCFFFF"><th style="text-align:center">2nd Shift Overall JPH</th></tr>
+                    <tr><th style="text-align:center"><font size="+3">@Shift2OverAllJPH</font></th></tr>
+                    <tr bgcolor="#CCFFFF"><th style="text-align:center">3rd Shift Overall JPH</th></tr>
+                    <tr><th style="text-align:center"><font size="+3">@Shift3OverAllJPH</font></th></tr>
+                </table>
+            }
+            else
+            {
+                <table cellpadding=0 cellspacing=0 width="20%" align="left" border=1>
+                    <tr bgcolor="#CCFFFF"><th style="text-align:center">Overall JPH</th></tr>
+                    <tr><th style="text-align:center"><font size="+3">  @Html.DisplayFor(model => model.VarianceOverallJPH1.OverallJPH)  </font></th></tr>
+                </table>
+            }
+            <br clear=all>*@
+
+        @*-------------------------------- Delivery - Production Summary OLD End --------------------------------*@
+
+
+        @*----------------------- Delivery - Production Summary -----------------------------*@
+
+        <table cellpadding="0" cellspacing="0" width="95%" align="left" border="1" id="Table5">
+            <tr bgcolor="#FFFF33">
+                <td height="30"><font size="+1"><b>&nbsp;Delivery - Production Summary</b></font></td>
+            </tr>
+        </table>
+        <br clear="all">
+        <table cellpadding="0" cellspacing="0" width="15%" align="left" id="Table6">
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
+        </table>
+        <br clear="all">
+        <table cellpadding="0" cellspacing="0" width="45%" align="left" border="1" id="Table8">
+            @Model.HtmlDelProdSum
+        </table>
+        <br clear="all">
+        <table cellpadding="0" cellspacing="0" width="15%" align="left">
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
+        </table>
+
+
+        <table cellpadding=0 cellspacing=0 width="15%" align="left">
+            <tr><td>&nbsp;  </td></tr>
+        </table>
+
+        @*--------------------- Below for Operation Table --------------------------------*@ 
+        <p style="page-break-before: always"></p>
+        <br clear=all>
+        @if (Model.strLtype.ToString() == "MACH")
+        {
+
+            if (Model.Variancepartname1.Count() != 0 && Model.strcaltable != null)
+            {
+                <table id="tblProductionSummery" cellpadding=0 cellspacing=0 width="85%" border=1>
+
+                    <tr>
+                        <th>&nbsp;</th>
+
+
+                        @foreach (var item in @Model.Variancepartname1)
+                        {
+                            <th colspan=4><small>@item.PART_TYPE_NAME</small></th>
+
+                        }
+
+
+                        <th colspan=3>&nbsp;</th>
+                    </tr>
+
+                    <tr>
+                        <th><small>Operation</small></th>
+
+                        @foreach (var item in @Model.Variancepartname1)
+                        {
+                            <th><small>PROD</small></th>
+                            <th><small>Float1</small></th>
+                            <th><small>Float2</small></th>
+                            <th><small>Float3</small></th>
+                        }
+
+                        <th>
+
+                            <small>Max WIP</small>
+                        </th>
+                        <th><small>Total Prod</small></th>
+                        <th><small>JPH</small></th>
+                    </tr>
+
+                    @Model.strcaltable
+                </table>
+            }
+
+        }
+
+        @*------------------------------------------ weekly summary of production Start----------------------------------------------*@
+
+
+
+
+        <table cellpadding=0 cellspacing=0 width="65%">
+            <tr height="30"><td>&nbsp;</td></tr>
+            <tr><td colspan=8><b><u>Weekly Production Summary for Week Ending  @Html.DisplayFor(m => m.VarianceTitles1.EndWeek)</u></b></td></tr>
+            <tr height="10"><td>&nbsp;</td></tr>
+            <tr style="text-align:center">
+                <td></td>
+                <th class="text-center">Mon</th>
+                <th class="text-center">Tue</th>
+                <th class="text-center">Wed</th>
+                <th class="text-center">Thu</th>
+                <th class="text-center">Fri</th>
+                <th class="text-center">Sat</th>
+                <th class="text-center">Sun</th>
+                <th class="text-center">Total</th>
+            </tr>
+
+
+            @foreach (var item in @Model.VarianceWeekPS1)
+            {
+                <tr>
+
+                    <td>@item.PART_TYPE_NAME</td>
+                    <td align="center">@item.MONDAY</td>
+                    <td align="center">@item.TUESDAY</td>
+                    <td align="center">@item.WEDNESDAY</td>
+                    <td align="center">@item.THURSDAY</td>
+                    <td align="center">@item.FRIDAY</td>
+                    <td align="center">@item.SATURDAY</td>
+                    <td align="center">@item.SUNDAY</td>
+                    <td align="center">@item.TOTAL</td>
+                </tr>
+            }
+
+            @if (Model.VarianceWeekPSschedules.Count() > 0)
+            {
+                <tr height="5"><td>&nbsp;</td></tr>
+                var schduleVal = Model.VarianceWeekPSschedules.Last();
+                <tr style="background:#ccffff">
+                    <td align="right"><b>Schedule</b></td>
+                    <td align="center">@Html.DisplayFor(m => schduleVal.msched)</td>
+                    <td align="center">
+                        @Html.DisplayFor(m => schduleVal.tsched)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => schduleVal.wsched)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => schduleVal.rsched)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => schduleVal.fsched)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => schduleVal.ssched)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => schduleVal.nsched)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => schduleVal.wtsched)
+                    </td>
+                </tr>
+            }
+
+
+
+            @if (Model.VarianceWeekPSdeltas.Count() > 0)
+            {
+                <tr height="5"><td>&nbsp;</td></tr>
+                var DeltaVal = Model.VarianceWeekPSdeltas.Last();
+                <tr>
+                    <td align="right"><b>Delta</b></td>
+                    <td align="center">@Html.DisplayFor(m => DeltaVal.dmtot)</td>
+                    <td align="center">
+                        @Html.DisplayFor(m => DeltaVal.dttot)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => DeltaVal.dwtot)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => DeltaVal.dthtot)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => DeltaVal.dftot)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => DeltaVal.dsatot)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => DeltaVal.dsutot)
+                    </td>
+                    <td align="center">
+                        @Html.DisplayFor(m => DeltaVal.dweektotal)
+                    </td>
+                </tr>
+            }
+
+
+
+            <tr height="5"><td>&nbsp;</td></tr>
+
+            <tr>
+                <td align="right">Control Hours</td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSControlHrs1.MON) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSControlHrs1.TUE) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSControlHrs1.WED) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSControlHrs1.THUR) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSControlHrs1.FRI) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSControlHrs1.SAT) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSControlHrs1.SUN) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSControlHrs1.TOTAL) </td>
+            </tr>
+
+            <tr>
+                <td align="right">JPH</td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSJPH1.MONJPH) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSJPH1.TUEJPH) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSJPH1.WEDJPH) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSJPH1.THURJPH) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSJPH1.FRIJPH) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSJPH1.SATJPH) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSJPH1.SUNJPH) </td>
+                <td align="center"> @Html.DisplayFor(model => model.VarianceWeekPSJPH1.TOTJPH) </td>
+            </tr>
+            <tr height="30"><td>&nbsp;</td></tr>
+        </table>
+
+
+
+
+        @*------------------------------------------------------ Parts On Hold --------------------------------------------------*@
+
+
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1 ID="Table1">
+            <tr bgcolor="#FFFF33"><td height="30" colspan=5><font size="+1"><b>&nbsp;Parts On Hold</b></font></td></tr>
+        </table>
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" ID="Table2">
+
+            <tr>
+                <td><b><u>Hold Date</u></b></td>
+                <td><b><u>Part</u></b></td>
+                <td><b><u>Workgroup</u></b></td>
+                <td><b><u>Reason</u></b></td>
+                <td align="center"><b><u>Quantity</u></b></td>
+            </tr>
+
+            @if (@Model.VarianceGetPartsOnHold1.Count() == 0)
+            {
+                <tr><td colspan="6" align="center">No Parts on Hold to Report</td></tr>
+            }
+
+            @foreach (var item in @Model.VarianceGetPartsOnHold1)
+            {
+                <tr>
+                    <td width="10%">@item.holddate</td>
+                    <td width="25%">@item.ptnamem1</td>
+                    <td width="15%">@item.wgnamem1</td>
+                    <td width="35%">@item.reason</td>
+                    <td align="center" width="7%">@item.hqty</td>
+                </tr>
+            }
+
+
+            <tr><td></td></tr>
+
+            <tr height="30"><td>&nbsp;</td></tr>
+
+
+        </table>
+
+
+      
+
+
+        @*------------------------------------------- Constraints new Start -------------------------------------------*@
+
+
+        @Model.strConstraintsTbl
+
+        @*------------------------------------------- Constraints new End -------------------------------------------*@
+
+
+        @*----------------------------------------------------- ------------------DAILY EVENTS -------------------------------------------------------------------*@
+
+
+
+        @*<br clear=all>
+            <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1>
+                <tr bgcolor="#FFFF33"><td height="30" colspan=3><font size="+1"><b>&nbsp;Daily Events</b></font></td></tr>
+            </table>
+            <br clear=all>
+
+            <table cellpadding=0 cellspacing=0 width="95%" align="left" rules="rows">
+
+                <tr>
+                    <td width="12%" valign="top"><b><u>Date Entered</u></b></td>
+                    <td width="10%" valign="top"><b><u>Entered By</u></b></td>
+                    <td width="65%" valign="top"><b><u>Event / Information</u></b></td>
+                </tr>
+
+                @if (@Model.VarianceDailyEvents1.Count() == 0)
+                {
+                    <tr><td colspan="6" align="center">No Information to Report</td></tr>
+                }
+
+                @foreach (var item in @Model.VarianceDailyEvents1)
+                {
+                    <tr><td valign="top">@item.dedate</td><td valign="top">@item.deby</td><td valign="top">@item.dedesc</td></tr>
+                    <tr></tr>
+
+                }
+
+                <tr height="30"><td>&nbsp;</td></tr>
+            </table>*@
+        @*------------------------------- Old Daily Events End ----------------------------*@
+
+        @*-------------------------- Daily Events New ----------------------------*@
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1>
+            <tr bgcolor="#FFFF33"><td height="30" colspan=3><font size="+1"><b>&nbsp;Daily Events</b></font></td></tr>
+        </table>
+        <br clear=all>
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" rules="rows">
+            @Model.HtmltblDailyEvnts
+            <tr height="30"><td>&nbsp;</td></tr>
+        </table>
+
+        <p style="page-break-before: always"></p>
+        @*-----------------Manual Downtime Log-------------*@
+
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1>
+            <tr bgcolor="#FFFF33"><td height="30" colspan=4><font size="+1"><b>&nbsp;Manual Downtime Log</b></font></td></tr>
+        </table>
+        <br clear=all>
+
+        <table cellpadding=0 cellspacing=0 width="75%" align="left">
+
+            @if (@Model.VarianceManualDownTime1.Count() > 0)
+            {
+                <tr>
+                    <th><b><u>Operation</u></b></th>
+                    <th style="text-align:center"><b><u>Time Down</u></b></th>
+                    <th style="text-align:center"><b><u>Time Up</u></b></th>
+                    <th><b><u>Reason / Description</u></b></th>
+                </tr>
+                foreach (var item in @Model.VarianceManualDownTime1)
+                {
+
+                    <tr>
+                        <td>@item.equipnamek1</td>
+                        <td align="center">@item.tdown </td>
+                        <td align="center">@item.tup</td>
+                        <td>@item.ddesc</td>
+                    </tr>
+
+                }
+            }
+            else
+            {
+                <tr><td>&nbsp;&nbsp;No Downtime Entries to Report</td></tr>
+            }
+
+
+
+            <tr><td></td></tr>
+
+
+            <tr height="30"><td>&nbsp;</td></tr>
+        </table>
+        <p style="page-break-before: always"></p>
+        @*-----------------7 Basic Startup Confirmation Questions ------------------*@
+
+        <br clear="all">
+        <table cellpadding=0 cellspacing=0 width="95%" align="left" border=1 ID="Table10">
+            <tr bgcolor="#FFFF33"><td height="30" colspan=6 align=left><font size="+1"><b>&nbsp;7 Basic Startup Confirmation Questions</b></font></td></tr>
+        </table>
+        <br clear="all">
+        <table cellpadding=0 cellspacing=0 width="95%" align="center" ID="Table9">
+            <tr height="5"><td></td></tr>
+            <tr height="20"><td rowspan=7 align=center><img src="~/Content/images/fordlogo.bmp" width=150 height=50></td><td><font face="Arial">1) Are 100% of required operations manned?</font></td></tr>
+            <tr height="20"><td><font face="Arial">2) 100% of the personnel TRAINED and CERTIFIED?</font></td></tr>
+            <tr height="20"><td><font face="Arial">3) Is the SUPERVISOR / MA available?</font></td></tr>
+            <tr height="20"><td><font face="Arial">4) Do you have any stations in REBALANCE / OFF_STANDARD?</font></td></tr>
+            <tr height="20"><td><font face="Arial">5) Did you count 100% MATERIAL at the workstations?</font></td></tr>
+            <tr height="20"><td><font face="Arial">6) Are all EQUIPMENT/TOOLS functioning properly?</font></td></tr>
+            <tr height="20"><td><font face="Arial">7) Are there any REPORTED PROBLEMS to follow-up on during the shift?</font></td></tr>
+            <tr height="5"><td></td></tr>
+        </table>
+
+       
+
+
+    </div>
+</body>
+
+</HTML>
+
+
+
+

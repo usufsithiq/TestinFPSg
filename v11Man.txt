@@ -1,0 +1,1206 @@
+using FPS_Measurables.Areas.LIMA.Models;
+using FPS_Measurables.Utilities;
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Web;
+using System.Xml;
+
+namespace FPS_Measurables.Areas.LIMA.Business
+{
+    public class Variance_R11Manager
+    {
+
+        private ClsDbMethods cls = new ClsDbMethods();
+        public string result = "", qry = "";
+        public VarianceTitle GetTitle(int desakey, string selectedDt, string endWeek)
+        {
+            VarianceTitle obj1 = new VarianceTitle();
+            obj1.Title = "";
+            //int desakey = 167;
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                DataTable dt = new DataTable();
+                SqlCommand cmd = new SqlCommand();
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "sp_GetDepartmentTitleAndCodeVariance_R11";
+                cmd.Connection = conn;
+                cmd.Parameters.AddWithValue("@deptsakeyInput", desakey);
+                conn.Open();
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                da.Fill(dt);
+                obj1.Title = dt.Rows[0].Field<String>("DepartmentTitle");
+                obj1.Code = dt.Rows[0].Field<String>("Code");
+
+                DateTime dtSelected = new DateTime();
+                dtSelected = Convert.ToDateTime(selectedDt);
+                string sDt = dtSelected.ToString("dddd") + ", "
+                             + dtSelected.ToString("MMM") + " "
+                             + dtSelected.ToString("dd") + ", "
+                             + dtSelected.ToString("yyyy");
+
+                obj1.CurrentDate = sDt;
+
+                DateTime dtEndWeek = new DateTime();
+                dtEndWeek = Convert.ToDateTime(endWeek);
+                string sEndWeek = dtEndWeek.ToString("MM") + "/"
+                                 + dtEndWeek.ToString("dd") + "/"
+                                 + dtEndWeek.ToString("yyyy");
+                obj1.EndWeek = sEndWeek;
+
+
+                //obj1.CurrentDate = dt.Rows[0].Field<String>("CurrentDate");
+                return obj1;
+            }
+        }
+        public List<VarianceOHSIMCases> GetOHSIMCasesVariance_R11()
+        {
+            List<VarianceOHSIMCases> VariList = new List<VarianceOHSIMCases>();
+            string plantName = "LIMA";
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                DataTable dt = new DataTable();
+                SqlCommand cmd = new SqlCommand();// "sp_GetOHSIMcases_Variance_R11", con);
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.CommandText = "sp_GetOHSIMcases_Variance_R11";
+                cmd.Parameters.AddWithValue("@Plant", plantName);
+                cmd.Connection = conn;
+                conn.Open();
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                da.Fill(dt);
+                conn.Close();
+                //VariList = ClsDbMethods.CommonMethod.ConvertToList<VarianceOHSIMCases>(dt);
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    VarianceOHSIMCases objOHSIM = new VarianceOHSIMCases();
+                    objOHSIM.NAME = Convert.ToString(dt.Rows[i]["NAME"]);
+                    objOHSIM.casedesc = dt.Rows[i]["casedesc"].ToString();
+                    objOHSIM.Dept = dt.Rows[i]["dept"].ToString();
+                    objOHSIM.doi = dt.Rows[i]["doi"].ToString();
+                    objOHSIM.lw = dt.Rows[i]["lw"].ToString();
+                    objOHSIM.rd = dt.Rows[i]["rd"].ToString();
+                    objOHSIM.comment = dt.Rows[i]["comment"].ToString();
+                    objOHSIM.statdesc = dt.Rows[i]["statdesc"].ToString();
+                    VariList.Add(objOHSIM);
+                }
+                return VariList;
+            }
+             
+        }
+
+        public VarianceWasteWalkHeader GetVarianceWasteWalkHeader(string endWeek)
+        {
+            VarianceWasteWalkHeader objHead = new VarianceWasteWalkHeader();
+            //String endWeek = "2019-07-01";
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetWasteWalkCompHeaderVariance_R11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@endweek", SqlDbType.VarChar).Value = endWeek;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    objHead.Monday = dt.Rows[0].Field<String>("MONDAY");
+                    objHead.Tuesday = dt.Rows[0].Field<String>("TUESDAY");
+                    objHead.Wednesday = dt.Rows[0].Field<String>("WEDNESDAY");
+                    objHead.Thursday = dt.Rows[0].Field<String>("THURSDAY");
+                    objHead.Friday = dt.Rows[0].Field<String>("FRIDAY");
+                    objHead.Saturday = dt.Rows[0].Field<String>("SATURDAY");
+                    objHead.Sunday = dt.Rows[0].Field<String>("SUNDAY");
+                    return objHead;
+                }
+            }
+        }
+
+        public List<VarianceWasteWalkWgSakey> GetWasteWalkWgSakey(int desakey)
+        {
+            //int desakey = 151;
+            List<VarianceWasteWalkWgSakey> objWasteWalkSakeys = new List<VarianceWasteWalkWgSakey>();
+            DataTable dtWgSakeyList = new DataTable();
+            qry = "SELECT * FROM DE_WW_TEAM WHERE de_sakey = '" + desakey + "' ORDER BY Team_description";
+            //SELECT DE.Workgroup_sakey,DE.Team_Description,LW.Workgroup_sakey,LW.WEEKEND,LW.Team_description,LW.DateCreated
+            //FROM DE_WW_TEAM DE INNER JOIN WWLast6Weeks LW ON DE.Workgroup_sakey = LW.Workgroup_sakey WHERE DE.de_sakey = '151' AND LW.WEEKEND = '2019-09-16' ORDER BY DE.Team_description
+            dtWgSakeyList = cls.GetQryResult(qry);
+            for (int i = 0; i < dtWgSakeyList.Rows.Count; i++)
+            {
+                VarianceWasteWalkWgSakey objWgSakey = new VarianceWasteWalkWgSakey();
+                objWgSakey.Workgroup_sakey = Convert.ToInt32(dtWgSakeyList.Rows[i]["Workgroup_sakey"].ToString());
+                objWgSakey.Team_Description = dtWgSakeyList.Rows[i]["Team_Description"].ToString();
+                objWasteWalkSakeys.Add(objWgSakey);
+            }
+            return objWasteWalkSakeys;
+        }
+
+
+
+        public List<VarianceMachiningRejects> GetVarianceMachiningRejectsVariance_R11(string Rejdt, int DE_SAKEY, int DEPTSAKEY)
+        {
+
+            List<VarianceMachiningRejects> ListVarianceMachiningRejects = new List<VarianceMachiningRejects>();
+            //int DE_SAKEY = 167;
+            //int DEPTSAKEY = 167;
+            //DateTime Rejdt = Convert.ToDateTime("2007-05-30 00:00:00.000");
+            //int DE_SAKEY = 151;
+            //int DEPTSAKEY = 25761;
+            //DateTime Rejdt = Convert.ToDateTime("2019-05-07 00:00:00.000");
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetMachiningRejectToAssemplyVariance_R11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@DE_SAKEY", SqlDbType.VarChar).Value = DE_SAKEY;
+                    cmd.Parameters.Add("@deptsakey", SqlDbType.VarChar).Value = DEPTSAKEY;
+                    cmd.Parameters.Add("@REJ_DATE", SqlDbType.DateTime).Value = Rejdt;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    //ListVarianceMachiningRejects = ClsDbMethods.CommonMethod.ConvertToList<VarianceMachiningRejects>(dt);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        VarianceMachiningRejects objRej = new VarianceMachiningRejects();
+                        objRej.PART_TYPE = dt.Rows[i]["PART_TYPE"].ToString();
+                        objRej.AREJ_DESC = dt.Rows[i]["AREJ_DESC"].ToString();
+                        objRej.DEF_TOTAL = Convert.ToInt32(dt.Rows[i]["DEF_TOTAL"].ToString());
+                        objRej.REPORT_BY = dt.Rows[i]["REPORT_BY"].ToString();
+                        ListVarianceMachiningRejects.Add(objRej);
+                    }
+                    return ListVarianceMachiningRejects;
+                }
+            } 
+            
+        }
+
+        // Delivery - MP&L Delivery Issues 
+        public List<VarianceMPALDelivery> GetVarianceMPALDelivery(int desakey, int deptsakey, string RejDt)
+        {
+            List<VarianceMPALDelivery> ListVarianceMPALDelivery = new List<VarianceMPALDelivery>();
+            //int desakey = 151;
+            //int deptsakey = 25761;
+            //string RejDt = "05-07-2019";
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                SqlCommand cmd = new SqlCommand("sp_GetMPLDeliveryVariance_R11", conn);
+                DataTable dt = new DataTable();
+                cmd.CommandType = CommandType.StoredProcedure;
+                cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+                cmd.Parameters.Add("@deptsakey", SqlDbType.Int).Value = deptsakey;
+                cmd.Parameters.Add("@rejDt", SqlDbType.DateTime).Value = RejDt;
+                cmd.CommandType = CommandType.StoredProcedure;
+                conn.Open();
+                SqlDataAdapter da = new SqlDataAdapter(cmd);
+                da.Fill(dt);
+                for (int i = 0; i < dt.Rows.Count; i++)
+                {
+                    VarianceMPALDelivery objMPALDelivery = new VarianceMPALDelivery();
+                    objMPALDelivery.Team = dt.Rows[i]["PART_TYPE"].ToString();
+                    objMPALDelivery.IncidentStartTime = dt.Rows[i]["REJ_TAG"].ToString();
+                    objMPALDelivery.ReportedBy = dt.Rows[i]["REPORT_BY"].ToString();
+
+                    if ((int)dt.Rows[i]["REJ_TOTAL"] == 1)
+                        objMPALDelivery.IssueDescription = dt.Rows[i]["AREJ_DESC"].ToString() + " - Late Delivery";
+                    else if ((int)dt.Rows[i]["REJ_TOTAL"] == 2)
+                        objMPALDelivery.IssueDescription = dt.Rows[i]["AREJ_DESC"].ToString() + " - Incorrect Parts Delivered";
+
+
+
+                    if ((int)dt.Rows[i]["DEF_TOTAL"] == 1)
+                        objMPALDelivery.IncidentDuration = "Less than 1 minute";
+                    else if ((int)dt.Rows[i]["DEF_TOTAL"] == 2)
+                        objMPALDelivery.IncidentDuration = "1-5 minutes";
+                    else if ((int)dt.Rows[i]["DEF_TOTAL"] == 2)
+                        objMPALDelivery.IncidentDuration = "5-10 minutes";
+                    else
+                        objMPALDelivery.IncidentDuration = "Over 10 minutes";
+
+
+
+                    ListVarianceMPALDelivery.Add(objMPALDelivery);
+
+
+                    //objMPALDelivery.part1 = dt.Rows[i]["part1"].ToString();
+                    //objMPALDelivery.rejdesc1 = dt.Rows[i]["rejdesc1"].ToString();
+                    //objMPALDelivery.rejdesc1a = dt.Rows[i]["rejdesc1a"].ToString();
+                    //objMPALDelivery.rejstart = dt.Rows[i]["rejstart"].ToString();
+                    //objMPALDelivery.rptby = dt.Rows[i]["rptby"].ToString();
+                    //ListVarianceMPALDelivery.Add(objMPALDelivery);
+                }
+
+                return ListVarianceMPALDelivery;
+
+            }
+             
+        }
+
+        public List<VarianceCompliance> GetVarianceCompliance(int desakey, string shfDt)
+        {
+            List<VarianceCompliance> ListVarianceCompliance = new List<VarianceCompliance>();
+            //int desakey = 148;
+            //string shfDt = "05-07-2019";
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetComplianceVariance_R11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+                    cmd.Parameters.Add("@shftDt", SqlDbType.DateTime).Value = shfDt;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        VarianceCompliance objCompliance = new VarianceCompliance();
+                        objCompliance.Description = dt.Rows[i]["CMPL_DESC"].ToString();
+                        objCompliance.Shift = Convert.ToInt32(dt.Rows[i]["SHIFT"].ToString());
+                        objCompliance.Workgroup = dt.Rows[i]["WORKGROUP_NAME"].ToString();
+                        objCompliance.CreatedBy = dt.Rows[i]["CREATE_USER_CODE"].ToString() + "   " + dt.Rows[i]["CREATE_DTS"].ToString();
+                        objCompliance.LastUpdatedBy = dt.Rows[i]["UPDATE_USER_CODE"].ToString() + "   " + dt.Rows[i]["UPDATE_DTS"].ToString();
+                        if (string.IsNullOrEmpty(dt.Rows[i]["LTYPE"].ToString()))
+                            objCompliance.LTYPE = "";
+                        else
+                            objCompliance.LTYPE = dt.Rows[i]["LTYPE"].ToString();
+
+
+                        if ((int)dt.Rows[i]["RESPONSE"] == 0)
+                            objCompliance.Response = "NO";
+                        else
+                            objCompliance.Response = "YES";
+
+                        ListVarianceCompliance.Add(objCompliance);
+
+                    }
+                    //for (int i = 0; i < dt.Rows.Count; i++)
+                    //{
+
+                    //    VarianceCompliance objCompliance = new VarianceCompliance();
+                    //    objCompliance.checkdesc = dt.Rows[i]["checkdesc"].ToString();
+                    //    objCompliance.wgnamed2 = dt.Rows[i]["wgnamed2"].ToString();
+                    //    objCompliance.shiftd2 = Convert.ToDouble(dt.Rows[i]["shiftd2"].ToString());
+                    //    objCompliance.respd2 = dt.Rows[i]["respd2"].ToString();
+                    //    objCompliance.cuserd2 = dt.Rows[i]["cuserd2"].ToString();
+                    //    if (string.IsNullOrEmpty(dt.Rows[i]["uuserd2"].ToString()))
+                    //        objCompliance.uuserd2 = "";
+                    //    else
+                    //        objCompliance.uuserd2 = dt.Rows[i]["uuserd2"].ToString();
+                    //    if (string.IsNullOrEmpty(dt.Rows[i]["uuserd2"].ToString()))
+                    //        objCompliance.udated2 = Convert.ToDateTime("1900-01-01");
+                    //    else
+                    //        objCompliance.udated2 = Convert.ToDateTime(dt.Rows[i]["udated2"].ToString());
+
+
+                    //    ListVarianceCompliance.Add(objCompliance);
+                    //}
+                    //ListVarianceCompliance = ClsDbMethods.CommonMethod.ConvertToList<VarianceCompliance>(dt);
+                    return ListVarianceCompliance;
+                }
+            }
+            
+        }
+
+        public List<VarianceProdSummaryBase> GetVarianceProdSummaryBase()
+        {
+            List<VarianceProdSummaryBase> ListVarianceProdSummaryBase = new List<VarianceProdSummaryBase>();
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetProdSumVariance_R11", conn))
+                {
+                    int desakey = 147;
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        VarianceProdSummaryBase objProdSummaryBase = new VarianceProdSummaryBase();
+                        objProdSummaryBase.ptname = dt.Rows[i]["ptname"].ToString();
+                        objProdSummaryBase.SHIFT = Convert.ToChar(dt.Rows[i]["SHIFT"].ToString());
+                        objProdSummaryBase.PARTS_SOLD = Convert.ToInt16(dt.Rows[i]["SHIFT"].ToString());
+                        objProdSummaryBase.HOURS = Convert.ToDouble(dt.Rows[i]["HOURS"].ToString());
+                        objProdSummaryBase.FLOAT_COUNT = Convert.ToInt16(dt.Rows[i]["FLOAT_COUNT"].ToString());
+                        objProdSummaryBase.shiftjph = Convert.ToDouble(dt.Rows[i]["shiftjph"].ToString());
+                        ListVarianceProdSummaryBase.Add(objProdSummaryBase);
+                    }
+
+                    //ListVarianceProdSummaryBase = ClsDbMethods.CommonMethod.ConvertToList<VarianceProdSummaryBase>(dt);
+                    return ListVarianceProdSummaryBase;
+                }
+            } 
+        }
+
+
+
+        public List<VarianceGetPartsOnHold> GetVarianceGetPartsOnHold(int desakey)
+        {
+            List<VarianceGetPartsOnHold> ListVarianceGetPartsOnHold = new List<VarianceGetPartsOnHold>();
+            //int desakey = 149;
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetPartsOnHoldVariance_R11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        VarianceGetPartsOnHold objPartsOnHold = new VarianceGetPartsOnHold();
+                        objPartsOnHold.holddate = dt.Rows[i]["holddate"].ToString();
+                        objPartsOnHold.ptnamem1 = dt.Rows[i]["ptnamem1"].ToString();
+                        if (string.IsNullOrEmpty(dt.Rows[i]["wgnamem1"].ToString()))
+                            objPartsOnHold.wgnamem1 = "";
+                        else
+                            objPartsOnHold.wgnamem1 = dt.Rows[i]["wgnamem1"].ToString();
+                        objPartsOnHold.reason = dt.Rows[i]["reason"].ToString();
+                        objPartsOnHold.hqty = dt.Rows[i]["hqty"].ToString();
+                        ListVarianceGetPartsOnHold.Add(objPartsOnHold);
+                    }
+                    //ListVarianceGetPartsOnHold = ClsDbMethods.CommonMethod.ConvertToList<VarianceGetPartsOnHold>(dt);
+                    return ListVarianceGetPartsOnHold;
+                }
+            }
+        }
+
+        public List<VarianceDailyEvents> GetVarianceDailyEvents(int desakey, string shiftdate)
+        {
+            List<VarianceDailyEvents> ListVarianceDailyEvents = new List<VarianceDailyEvents>();
+            //int desakey = 149;
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                DataTable dtDailyEvents = new DataTable();
+                //string currentdate1 = "DateAdd('d', -1, "+ currentdate +") 23:00:00";
+                string currentdate1 = shiftdate + " 23:00:00";
+                qry = "SELECT ENTRYDATE dedate, ENTEREDBY deby, EVENT dedesc FROM DE_EVENTS" +
+               " WHERE (DE_SAKEY IN ('" + desakey + "',42) OR COPYDEPT1=('" + desakey + "') OR " +
+               " COPYDEPT2=('" + desakey + "') OR COPYDEPT3=('" + desakey + "')) AND (EntryDate >=DateAdd(d, -1, '" + currentdate1 + "') " +
+               " OR KEEPITEM = 'Y')";
+
+                dtDailyEvents = cls.GetQryResult(qry);
+
+                for (int i = 0; i < dtDailyEvents.Rows.Count; i++)
+                {
+                    VarianceDailyEvents objDailyEvents = new VarianceDailyEvents();
+                    objDailyEvents.dedate = dtDailyEvents.Rows[i]["dedate"].ToString();
+                    objDailyEvents.deby = dtDailyEvents.Rows[i]["deby"].ToString();
+                    objDailyEvents.dedesc = dtDailyEvents.Rows[i]["dedesc"].ToString();
+                    ListVarianceDailyEvents.Add(objDailyEvents);
+                }
+                //ListVarianceDailyEvents = ClsDbMethods.CommonMethod.ConvertToList<VarianceDailyEvents>(dt);
+                return ListVarianceDailyEvents;
+            }
+        }
+
+        public List<VarianceManualDownTime> GetVarianceManualDownTime(int desakey, string shifDt)
+        {
+            List<VarianceManualDownTime> ListVarianceManualDownTime = new List<VarianceManualDownTime>();
+            //int desakey = 151;
+            //String shifDt = "2018-02-10 00:00:00.000";
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                DataTable dtMDownTime = new DataTable();
+                qry = "SELECT ISNULL(BE.EQUIP_CODE,'') + ' ' + ISNULL(BS.STATION_CODE,'') equipnamek1,DE.TIMEUP tup,DE.TIMEDOWN tdown,DE.DESCRIPTION ddesc " +
+                        " FROM DOWNTIME_ENTRY DE" +
+                        " FULL JOIN BL_EQUIP BE ON DE.EQUIP_SAKEY = BE.EQUIP_SAKEY" +
+                        " FULL JOIN BL_STATION BS ON DE.STATION_SAKEY = BS.STATION_SAKEY" +
+                        " WHERE DE.DE_SAKEY = '" + desakey + "' AND DE.ShiftDate = '" + shifDt + "' ORDER BY DE.TIMEDOWN DESC, DE.TIMEUP DESC";
+                //qry = "SELECT BE.EQUIP_CODE + ' ' + BS.STATION_CODE equipnamek1,DE.TIMEUP tdown,DE.TIMEDOWN tup,DE.DESCRIPTION ddesc " +
+                //        " FROM DOWNTIME_ENTRY DE" +
+                //        " LEFT JOIN BL_EQUIP BE ON DE.EQUIP_SAKEY = BE.EQUIP_SAKEY" +
+                //        " LEFT JOIN BL_STATION BS ON DE.STATION_SAKEY = BS.STATION_SAKEY" +
+                //        " WHERE DE.DE_SAKEY = '" + desakey + "' AND DE.ShiftDate = '" + shifDt + "' ORDER BY DE.TIMEDOWN DESC, DE.TIMEUP DESC";
+                dtMDownTime = cls.GetQryResult(qry);
+                for (int i = 0; i < dtMDownTime.Rows.Count; i++)
+                {
+                    VarianceManualDownTime objManualDT = new VarianceManualDownTime();
+                    objManualDT.equipnamek1 = dtMDownTime.Rows[i]["equipnamek1"].ToString();
+                    objManualDT.tdown = dtMDownTime.Rows[i]["tdown"].ToString();
+                    objManualDT.tup = dtMDownTime.Rows[i]["tup"].ToString();
+                    objManualDT.ddesc = dtMDownTime.Rows[i]["ddesc"].ToString();
+                    ListVarianceManualDownTime.Add(objManualDT);
+                }
+                return ListVarianceManualDownTime;
+            }   
+        }
+
+        public List<Varaiance1stTTRejection> GetVaraiance1stTTRejection(int desakey, string currDt)
+        {
+            List<Varaiance1stTTRejection> ListVaraiance1stTTRejection = new List<Varaiance1stTTRejection>();
+            //int desakey = 151;
+            //string currDt = "2019-05-07 00:00:00.000";
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetFTFRejectsVariance_R11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.VarChar).Value = desakey;
+                    cmd.Parameters.Add("@currentdate", SqlDbType.DateTime).Value = currDt;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        Varaiance1stTTRejection objTTRejct = new Varaiance1stTTRejection();
+                        objTTRejct.WG_SAKEY = Convert.ToInt32(dt.Rows[i]["WORKGROUP_SAKEY"].ToString());
+                        objTTRejct.twgname = dt.Rows[i]["WORKGROUP_NAME"].ToString();
+                        objTTRejct.REJDATE = Convert.ToDateTime(dt.Rows[i]["REJ_DATE"].ToString());
+                        objTTRejct.REJDESC = dt.Rows[i]["REJDESC"].ToString();
+                        objTTRejct.REJECTS = Convert.ToInt16(dt.Rows[i]["REJECTS"].ToString());
+                        ListVaraiance1stTTRejection.Add(objTTRejct);
+                    }
+                    //ListVaraiance1stTTRejection = ClsDbMethods.CommonMethod.ConvertToList<Varaiance1stTTRejection>(dt);
+                    return ListVaraiance1stTTRejection;
+                }
+            }
+            //using (SqlConnection con = new SqlConnection(ConfigurationManager.ConnectionStrings["LimaConnectionString"].ConnectionString))
+            //{
+            //    using (SqlCommand cmd = new SqlCommand("sp_GetFTFRejectsVariance_R11", con))
+            //    {
+            //        DataTable dt = new DataTable();
+            //        cmd.CommandType = CommandType.StoredProcedure;
+            //        cmd.Parameters.Add("@desakey", SqlDbType.VarChar).Value = 151;
+            //        cmd.Parameters.Add("@currentdate", SqlDbType.DateTime).Value = "2019-05-07 00:00:00.000";
+            //        cmd.CommandType = CommandType.StoredProcedure;
+            //        con.Open();
+            //        SqlDataAdapter da = new SqlDataAdapter(cmd);
+            //        da.Fill(dt);
+            //        ListVaraiance1stTTRejection = ClsDbMethods.CommonMethod.ConvertToList<Varaiance1stTTRejection>(dt);
+            //        return ListVaraiance1stTTRejection;
+            //    }
+            //}
+        }
+
+        public List<Variance1stTTRejectionCycleCount> GetVaraiance1stTTRejectionCyclecount(int desakey, string shiftdate)
+        {
+            List<Variance1stTTRejectionCycleCount> Collect1stTTRejectionCycleCount = new List<Variance1stTTRejectionCycleCount>();
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_Get1stTTRejCycleCount", conn))
+                {
+                    DataTable dt1stTTCCount = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@DE_SAKEY", SqlDbType.VarChar).Value = desakey;
+                    cmd.Parameters.Add("@shiftDt", SqlDbType.DateTime).Value = shiftdate;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt1stTTCCount);
+                    for (int i = 0; i < dt1stTTCCount.Rows.Count; i++)
+                    {
+                        Variance1stTTRejectionCycleCount obj1stTTRejectCCount = new Variance1stTTRejectionCycleCount();
+                        obj1stTTRejectCCount.WORKGROUP_SAKEY = Convert.ToInt32(dt1stTTCCount.Rows[i]["WORKGROUP_SAKEY"].ToString());
+                        obj1stTTRejectCCount.OP = dt1stTTCCount.Rows[i]["OP"].ToString();
+                        obj1stTTRejectCCount.DEF_DESC = dt1stTTCCount.Rows[i]["DEF_DESC"].ToString();
+                        obj1stTTRejectCCount.OP_DESC = dt1stTTCCount.Rows[i]["OP"] + " " + dt1stTTCCount.Rows[i]["DEF_DESC"];
+                        //obj1stTTRejectCCount.REJ_TOTAL= Convert.ToInt32(dt1stTTCCount.Rows[i]["REJ_TOTAL"].ToString());
+                        obj1stTTRejectCCount.Count2 = Convert.ToInt32(dt1stTTCCount.Rows[i]["Count2"].ToString());
+                        obj1stTTRejectCCount.Count3 = Convert.ToInt32(dt1stTTCCount.Rows[i]["Count3"].ToString());
+                        Collect1stTTRejectionCycleCount.Add(obj1stTTRejectCCount);
+
+                    }
+
+                } 
+            }
+            return Collect1stTTRejectionCycleCount;
+        }
+
+        public List<Variance1stTTFTTPercentage> getFTTPerc(int desakey, string selectedDt)
+        {
+            List<Variance1stTTFTTPercentage> cFTTPerc = new List<Variance1stTTFTTPercentage>();
+            DataSet dsFFPerc = new DataSet();
+            DataSet dsFFPerc2 = new DataSet();
+            string qry2 = "";
+            var conn = Clsdbconnection.GetConnection();
+            qry = "SELECT w.WORKGROUP_SAKEY,OP,F.DEF_DESC, REJ_TOTAL FROM FTT_QLSCM_CYCLES F, CB_WORKGROUP w, CB_WORKGROUP_DEPT d " +
+                  "WHERE F.REJ_DATE = '" + selectedDt + "' AND F.DE_SAKEY = '" + desakey + "' " +
+                  " AND F.WORKGROUP_SAKEY = w.WORKGROUP_SAKEY AND F.WORKGROUP_SAKEY = d.WORKGROUP_SAKEY ORDER BY F.OP";
+
+            //dtFFPerc = cls.GetQryResult(qry);
+            SqlCommand cmd = new SqlCommand(qry, conn);
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            da.Fill(dsFFPerc);
+            qry2 = "SELECT DE_SAKEY,parts,Dateid FROM FTTPRODDAILYALL WHERE DE_SAKEY='" + desakey + "' AND DATEID='" + selectedDt + "'";
+
+            SqlCommand cmd2 = new SqlCommand(qry2, conn);
+            SqlDataAdapter da2 = new SqlDataAdapter(cmd2);
+            da2.Fill(dsFFPerc2);
+
+
+            for (int i = 0; i < dsFFPerc.Tables[0].Rows.Count; i++)
+            {
+                Variance1stTTFTTPercentage objFTTPerc = new Variance1stTTFTTPercentage();
+                objFTTPerc.WORKGROUP_SAKEY = Convert.ToInt32(dsFFPerc.Tables[0].Rows[i]["WORKGROUP_SAKEY"].ToString());
+                objFTTPerc.OP = dsFFPerc.Tables[0].Rows[i]["OP"].ToString();
+                objFTTPerc.DEF_DESC = dsFFPerc.Tables[0].Rows[i]["DEF_DESC"].ToString();
+                objFTTPerc.REJ_TOTAL = Convert.ToInt32(dsFFPerc.Tables[0].Rows[i]["REJ_TOTAL"].ToString());
+                cFTTPerc.Add(objFTTPerc);
+            }
+            return cFTTPerc;
+
+        }
+
+        public Parts Getparts(int desakey, string selectedDt)
+        {
+            var conn = Clsdbconnection.GetConnection();
+            DataTable dtParts = new DataTable();
+            qry = "SELECT DE_SAKEY,parts,Dateid FROM FTTPRODDAILYALL WHERE DE_SAKEY='" + desakey + "' AND DATEID='" + selectedDt + "'";
+            SqlCommand cmd = new SqlCommand(qry, conn);
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            da.Fill(dtParts);
+            Parts objParts = new Parts();
+            if (dtParts.Rows.Count > 0)
+            {
+                if (string.IsNullOrEmpty(dtParts.Rows[0]["parts"].ToString()))
+                    objParts.parts = 0;
+                else
+                    objParts.parts = Convert.ToInt32(dtParts.Rows[0]["parts"].ToString());
+            }
+            else
+            {
+                objParts.parts = 0;
+            }
+
+            return objParts;
+        }
+
+
+        public List<Variance1stFTTSummary> GetFTTSummary(int desakey, string selecteDt)
+        {
+            List<Variance1stFTTSummary> cVariance1stFTTSummary = new List<Variance1stFTTSummary>();
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_FTT_Summary", conn))
+                {
+                    DataTable dtFTTSummary = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.VarChar).Value = desakey;
+                    cmd.Parameters.Add("@shiftDt", SqlDbType.DateTime).Value = selecteDt;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dtFTTSummary);
+                    for (int i = 0; i < dtFTTSummary.Rows.Count; i++)
+                    {
+                        Variance1stFTTSummary objFTTSummary = new Variance1stFTTSummary();
+                        objFTTSummary.WORKGROUP_SAKEY = Convert.ToInt32(dtFTTSummary.Rows[i]["WORKGROUP_SAKEY"].ToString());
+                        objFTTSummary.WORKGROUP_NAME = dtFTTSummary.Rows[i]["WORKGROUP_NAME"].ToString();
+                        objFTTSummary.REJECTS = Convert.ToInt32(dtFTTSummary.Rows[i]["REJECTS"].ToString());
+                        objFTTSummary.REJ_TOTAL1 = Convert.ToInt32(dtFTTSummary.Rows[i]["REJ_TOTAL1"].ToString());
+                        if (string.IsNullOrEmpty(dtFTTSummary.Rows[i]["LTYPE"].ToString()))
+                            objFTTSummary.LTYPE = "";
+                        else
+                            objFTTSummary.LTYPE = dtFTTSummary.Rows[i]["LTYPE"].ToString();
+                        cVariance1stFTTSummary.Add(objFTTSummary);
+                    }
+                }
+            }
+            return cVariance1stFTTSummary;
+        }
+
+        public List<VarianceProdSum> GetVarianceProdSum(int desakey, string selectedDt)
+        {
+            List<VarianceProdSum> ListVarianceProdSum = new List<VarianceProdSum>();
+            //int desakey = 147;
+            //string dtID = "2019-02-27 00:00:00.000";
+
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetProdSumarryTotal_Variance_R11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.VarChar).Value = desakey;
+                    cmd.Parameters.Add("@DATEID", SqlDbType.DateTime).Value = selectedDt;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        VarianceProdSum objProdSum = new VarianceProdSum();
+                        objProdSum.PART_TYPE_SAKEY = Convert.ToInt32(dt.Rows[i]["PART_TYPE_SAKEY"].ToString());
+                        objProdSum.PART_TYPE_NAME = dt.Rows[i]["PART_TYPE_NAME"].ToString();
+                        //objProdSum.COMP_SAKEY = dt.Rows[i]["COMP_SAKEY"].ToString();
+                        objProdSum.COMP_SAKEY = dt.Rows[i]["PART_TYPE_SAKEY"].ToString();
+                        objProdSum.shift = dt.Rows[i]["Shift"].ToString();
+                        objProdSum.prod = Convert.ToInt16(dt.Rows[i]["Prod"].ToString());
+                        objProdSum.hours = Convert.ToDouble(dt.Rows[i]["Ctl Hrs"].ToString());
+                        if (string.IsNullOrEmpty(dt.Rows[i]["Act Float"].ToString()))
+                        {
+                            objProdSum.floatcount = 0.0;
+                        }
+                        else
+                        {
+                            objProdSum.floatcount = Convert.ToDouble(dt.Rows[i]["Act Float"].ToString());
+                        }
+
+                        objProdSum.JPH = Convert.ToDouble(dt.Rows[i]["JPH"].ToString());
+
+
+                        ListVarianceProdSum.Add(objProdSum);
+                    }
+                    //ListVarianceProdSum = ClsDbMethods.CommonMethod.ConvertToList<VarianceProdSum>(dt);
+                    return ListVarianceProdSum;
+                }
+            }
+        }
+
+        public VarianceOverallJPH GetVarianceOverallJPH(string txnDt, int DE_SAKEY)
+        {
+            VarianceOverallJPH obj1 = new VarianceOverallJPH();
+            //string txnDt = "2015-10-01 00:00:00.000";
+            //int DE_SAKEY = 149;
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetOverallJPH", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@TXN_DATE", SqlDbType.DateTime).Value = txnDt;
+                    cmd.Parameters.Add("@DE_SAKEY", SqlDbType.VarChar).Value = DE_SAKEY;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    if (string.IsNullOrEmpty(dt.Rows[0]["OverallJPH"].ToString()))
+                    {
+                        obj1.OverallJPH = 0;
+                    }
+                    else
+                    {
+                        //obj1.OverallJPH = dt.Rows[0].Field<double>("OverallJPH");
+                        obj1.OverallJPH = Convert.ToDouble(dt.Rows[0]["OverallJPH"].ToString());
+                    }
+
+                    return obj1;
+                }
+            }
+
+        }
+
+        public List<Variancepartname> GetVariancepartname(int desakey)
+        {
+            List<Variancepartname> ListVariancepartname = new List<Variancepartname>();
+            //int DE_SAKEY = 147;
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_Getpartnamef1VarianceR_11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@DE_SAKEY", SqlDbType.Int).Value = desakey;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    for (int i = 0; i < dt.Rows.Count; i++)
+                    {
+                        Variancepartname objPartName = new Variancepartname();
+                        objPartName.PART_TYPE_SAKEY = Convert.ToInt32(dt.Rows[i]["PART_TYPE_SAKEY"].ToString());
+                        objPartName.PART_TYPE_NAME = dt.Rows[i]["PART_TYPE_NAME"].ToString();
+                        ListVariancepartname.Add(objPartName);
+                    }
+                    //ListVariancepartname = ClsDbMethods.CommonMethod.ConvertToList<Variancepartname>(dt);
+                    return ListVariancepartname;
+                }
+            }
+        }
+
+
+        //public List<VarianceWeekPS> GetVarianceWeekPS(int desakey, string endWeekDt)
+        //{
+        //    List<VarianceWeekPS> ListVarianceWeekPS = new List<VarianceWeekPS>();
+        //    VarianceViewModal objVModel = new VarianceViewModal();
+        //    List<VarianceWeekPSschedule> _lstSchedule = new List<VarianceWeekPSschedule>();
+        //    List<VarianceWeekPSdelta> _lstDelta = new List<VarianceWeekPSdelta>();
+        //    //int desakey = 149;
+        //    //string endWeekDt = "2015-05-03 00:00:00.000";
+        //    using (var conn = Clsdbconnection.GetConnection())
+        //    {
+        //        using (SqlCommand cmd = new SqlCommand("sp_GetWeeklyPSVariance_R11", conn))
+        //        {
+        //            //DataTable dt = new DataTable();
+        //            DataSet dtSet = new DataSet();
+        //            cmd.CommandType = CommandType.StoredProcedure;
+        //            cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+        //            cmd.Parameters.Add("@endweek", SqlDbType.DateTime).Value = endWeekDt;
+        //            cmd.CommandType = CommandType.StoredProcedure;
+        //            conn.Open();
+        //            SqlDataAdapter da = new SqlDataAdapter(cmd);
+        //            da.Fill(dtSet);
+        //            for (int i = 0; i < dtSet.Tables[0].Rows.Count; i++)
+        //            {
+        //                VarianceWeekPS objWeekPS = new VarianceWeekPS();
+        //                objWeekPS.PART_TYPE_SAKEY = Convert.ToInt32(dtSet.Tables[0].Rows[i]["PART_TYPE_SAKEY"].ToString());
+        //                objWeekPS.PART_TYPE_NAME = dtSet.Tables[0].Rows[i]["PART_TYPE_NAME"].ToString();
+        //                objWeekPS.MONDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["MONDAY"].ToString());
+        //                objWeekPS.TUESDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["TUESDAY"].ToString());
+        //                objWeekPS.WEDNESDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["WEDNESDAY"].ToString());
+        //                objWeekPS.THURSDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["THURSDAY"].ToString());
+        //                objWeekPS.FRIDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["FRIDAY"].ToString());
+        //                objWeekPS.SATURDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["SATURDAY"].ToString());
+        //                objWeekPS.SUNDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["SUNDAY"].ToString());
+        //                objWeekPS.TOTAL = Convert.ToDouble(dtSet.Tables[0].Rows[i]["TOTAL"].ToString());
+
+        //                ListVarianceWeekPS.Add(objWeekPS);
+        //                objVModel.VarianceWeekPS1 = ListVarianceWeekPS;
+
+        //            }
+        //            VarianceWeekPSschedule objSchedule = new VarianceWeekPSschedule();
+        //            objSchedule.msched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["msched"].ToString());
+        //            objSchedule.tsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["tsched"].ToString());
+        //            objSchedule.wsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["wsched"].ToString());
+        //            objSchedule.rsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["rsched"].ToString());
+        //            objSchedule.fsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["fsched"].ToString());
+        //            objSchedule.ssched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["ssched"].ToString());
+        //            objSchedule.nsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["nsched"].ToString());
+        //            objSchedule.wtsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["wtsched"].ToString());
+        //            _lstSchedule.Add(objSchedule);
+        //            objVModel.VarianceWeekPSschedules = _lstSchedule;
+
+        //            VarianceWeekPSdelta objDelta = new VarianceWeekPSdelta();
+        //            objDelta.dmtot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dmtot"].ToString());
+        //            objDelta.dttot= Convert.ToInt32(dtSet.Tables[2].Rows[0]["dttot"].ToString());
+        //            objDelta.dwtot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dwtot"].ToString());
+        //            objDelta.dthtot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dthtot"].ToString());
+        //            objDelta.dftot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dftot"].ToString());
+        //            objDelta.dsatot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dsatot"].ToString());
+        //            objDelta.dsutot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dsutot"].ToString());
+        //            objDelta.dweektotal = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dweektotal"].ToString());
+        //            _lstDelta.Add(objDelta);
+        //            objVModel.VarianceWeekPSdeltas = _lstDelta;
+        //            //ListVarianceWeekPS = ClsDbMethods.CommonMethod.ConvertToList<VarianceWeekPS>(dt);
+        //            return ListVarianceWeekPS;
+        //        }
+        //    }
+        //}
+
+        public DataSet GetVarianceWeekPS(int desakey, string endWeekDt)
+        {
+            List<VarianceWeekPS> ListVarianceWeekPS = new List<VarianceWeekPS>();
+            VarianceViewModal objVModel = new VarianceViewModal();
+            List<VarianceWeekPSschedule> _lstSchedule = new List<VarianceWeekPSschedule>();
+            List<VarianceWeekPSdelta> _lstDelta = new List<VarianceWeekPSdelta>();
+            //int desakey = 149;
+            //string endWeekDt = "2015-05-03 00:00:00.000";
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetWeeklyPSVariance_R11", conn))
+                {
+                    //DataTable dt = new DataTable();
+                    DataSet dtSet = new DataSet();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+                    cmd.Parameters.Add("@endweek", SqlDbType.DateTime).Value = endWeekDt;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dtSet);
+                    //for (int i = 0; i < dtSet.Tables[0].Rows.Count; i++)
+                    //{
+                    //    VarianceWeekPS objWeekPS = new VarianceWeekPS();
+                    //    objWeekPS.PART_TYPE_SAKEY = Convert.ToInt32(dtSet.Tables[0].Rows[i]["PART_TYPE_SAKEY"].ToString());
+                    //    objWeekPS.PART_TYPE_NAME = dtSet.Tables[0].Rows[i]["PART_TYPE_NAME"].ToString();
+                    //    objWeekPS.MONDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["MONDAY"].ToString());
+                    //    objWeekPS.TUESDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["TUESDAY"].ToString());
+                    //    objWeekPS.WEDNESDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["WEDNESDAY"].ToString());
+                    //    objWeekPS.THURSDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["THURSDAY"].ToString());
+                    //    objWeekPS.FRIDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["FRIDAY"].ToString());
+                    //    objWeekPS.SATURDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["SATURDAY"].ToString());
+                    //    objWeekPS.SUNDAY = Convert.ToDouble(dtSet.Tables[0].Rows[i]["SUNDAY"].ToString());
+                    //    objWeekPS.TOTAL = Convert.ToDouble(dtSet.Tables[0].Rows[i]["TOTAL"].ToString());
+
+                    //    ListVarianceWeekPS.Add(objWeekPS);
+                    //    objVModel.VarianceWeekPS1 = ListVarianceWeekPS;
+
+                    //}
+                    //VarianceWeekPSschedule objSchedule = new VarianceWeekPSschedule();
+                    //objSchedule.msched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["msched"].ToString());
+                    //objSchedule.tsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["tsched"].ToString());
+                    //objSchedule.wsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["wsched"].ToString());
+                    //objSchedule.rsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["rsched"].ToString());
+                    //objSchedule.fsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["fsched"].ToString());
+                    //objSchedule.ssched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["ssched"].ToString());
+                    //objSchedule.nsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["nsched"].ToString());
+                    //objSchedule.wtsched = Convert.ToInt32(dtSet.Tables[1].Rows[0]["wtsched"].ToString());
+                    //_lstSchedule.Add(objSchedule);
+                    //objVModel.VarianceWeekPSschedules = _lstSchedule;
+
+                    //VarianceWeekPSdelta objDelta = new VarianceWeekPSdelta();
+                    //objDelta.dmtot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dmtot"].ToString());
+                    //objDelta.dttot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dttot"].ToString());
+                    //objDelta.dwtot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dwtot"].ToString());
+                    //objDelta.dthtot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dthtot"].ToString());
+                    //objDelta.dftot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dftot"].ToString());
+                    //objDelta.dsatot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dsatot"].ToString());
+                    //objDelta.dsutot = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dsutot"].ToString());
+                    //objDelta.dweektotal = Convert.ToInt32(dtSet.Tables[2].Rows[0]["dweektotal"].ToString());
+                    //_lstDelta.Add(objDelta);
+                    //objVModel.VarianceWeekPSdeltas = _lstDelta;
+                    //ListVarianceWeekPS = ClsDbMethods.CommonMethod.ConvertToList<VarianceWeekPS>(dt);
+                    return dtSet;
+                }
+            }
+        }
+
+
+        public VarianceWeekPSControlHrs GetVarianceWeekPSControlHrs(int desakey, string endWeekDt)
+        {
+            VarianceWeekPSControlHrs objHead = new VarianceWeekPSControlHrs();
+            //int desakey = 149;
+            //string endWeekDt = "2015-05-03 00:00:00.000";
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetWeeklyPSDirectHoursVariance_R11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+                    cmd.Parameters.Add("@endweek", SqlDbType.DateTime).Value = endWeekDt;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    objHead.MON = dt.Rows[0].Field<Double>("MON");
+
+                    objHead.TUE = dt.Rows[0].Field<Double>("TUE");
+                    objHead.WED = dt.Rows[0].Field<Double>("WED");
+                    objHead.THUR = dt.Rows[0].Field<Double>("THUR");
+                    objHead.FRI = dt.Rows[0].Field<Double>("FRI");
+                    objHead.SAT = dt.Rows[0].Field<Double>("SAT");
+                    objHead.SUN = dt.Rows[0].Field<Double>("SUN");
+                    objHead.TOTAL = dt.Rows[0].Field<Double>("TOTAL");
+                    return objHead;
+                }
+            }
+        }
+
+
+
+        public VarianceWeekPSJPH GetVarianceWeekPSJPH(int desakey, string endWeekDt)
+        {
+            VarianceWeekPSJPH objHead = new VarianceWeekPSJPH();
+            //int desakey = 149;
+            //string endWeekDt = "2015-05-03 00:00:00.000";
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetWeeklyPSDirectJPHVariance_R11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+                    cmd.Parameters.Add("@endweek", SqlDbType.DateTime).Value = endWeekDt;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    objHead.MONJPH = dt.Rows[0].Field<Double>("MONJPH");
+                    objHead.TUEJPH = dt.Rows[0].Field<Double>("TUEJPH");
+                    objHead.WEDJPH = dt.Rows[0].Field<Double>("WEDJPH");
+                    objHead.THURJPH = dt.Rows[0].Field<Double>("THURJPH");
+                    objHead.FRIJPH = dt.Rows[0].Field<Double>("FRIJPH");
+                    objHead.SATJPH = dt.Rows[0].Field<Double>("SATJPH");
+                    objHead.SUNJPH = dt.Rows[0].Field<Double>("SUNJPH");
+                    objHead.TOTJPH = dt.Rows[0].Field<Double>("TOTJPH");
+                    return objHead;
+                }
+            }
+        }
+
+
+
+        public DataTable GetLType(int desakey)
+        {
+            List<VarianceWeekPS> ListVarianceWeekPS = new List<VarianceWeekPS>();
+            //int desakey = 149;
+            //string endWeekDt = "2015-05-03 00:00:00.000";
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_GetLTypeVariance_R11", conn))
+                {
+                    DataTable dtSet = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@desakey", SqlDbType.Int).Value = desakey;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dtSet);
+                    return dtSet;
+                }
+            }
+        }
+
+
+
+        //Delivery - Production Summary
+        #region
+
+        public DataTable GetVariancepartGetfloatdata1(string eqsakey)
+        {
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_Getpartnamef1VarianceRFloat1_11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@EQUIP_SAKEY", SqlDbType.Int).Value = eqsakey;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    return dt;
+                }
+            }
+        }
+
+        public DataTable GetVariancepartGetfloatdata2(string eqsakey)
+        {
+
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_Getpartnamef1VarianceRFloat2_11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@EQUIP_SAKEY", SqlDbType.Int).Value = eqsakey;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    return dt;
+                }
+            }
+        }
+
+        public DataTable GetVariancepartdata(int desakey, string shiftDt)
+        {
+            // int DE_SAKEY = 147;
+            // string shiftDt = "2019-02-27 00:00:00.000";
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_Getpartnamef1VarianceRData_11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@DE_SAKEY", SqlDbType.Int).Value = desakey;
+                    cmd.Parameters.Add("@shiftdate", SqlDbType.DateTime).Value = shiftDt;
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    return dt;
+                }
+            }
+        }
+
+        #endregion
+
+
+
+        public String GetConstraintsXML(int rptId, string strDt, string endDt, string nods)
+        {
+            string ConnStr = ConfigurationManager.ConnectionStrings["LIMAFISODBConnectionString"].ConnectionString;
+            SqlConnection dbConn = new SqlConnection(ConnStr);
+            dbConn.Open();
+            DataTable dtConstraintsXML = new DataTable();
+            DataSet dtConstraintsXML2 = new DataSet();
+
+            SqlCommand cmd = new SqlCommand("NFIS_runReport_PR", dbConn);
+            cmd.CommandType = CommandType.StoredProcedure;
+            cmd.Parameters.Add("@p_reports", SqlDbType.Int).Value = rptId;
+            cmd.Parameters.Add("@p_SStartTime", SqlDbType.DateTime).Value = strDt;
+            cmd.Parameters.Add("@p_SEndTime", SqlDbType.DateTime).Value = endDt;
+            cmd.Parameters.Add("@p_nodes", SqlDbType.NVarChar).Value = nods;
+           // cmd.Parameters.Add("@p_areaID", SqlDbType.NVarChar).Value = 1;
+
+            //cmd.Parameters.Add("@p_groups", SqlDbType.Int).Value = 1;
+            SqlDataAdapter da = new SqlDataAdapter(cmd);
+            da.Fill(dtConstraintsXML);
+            var stringBuilder = new StringBuilder();
+            stringBuilder.Append("<?xml version='1.0' encoding='utf-8'?><FISdata>");
+            foreach (DataRow dr in dtConstraintsXML.Rows)
+            {
+                stringBuilder.Append(dr[0].ToString());
+            }
+            stringBuilder.Append("</FISdata>");
+            string shiftDt = Convert.ToString(Convert.ToDateTime(strDt).AddDays(+1));
+
+            string yr = Convert.ToString(DateTime.Parse(shiftDt).Year);
+            string mnth = Convert.ToString(DateTime.Parse(shiftDt).ToString("MM"));
+            string dy = Convert.ToString(DateTime.Parse(shiftDt).ToString("dd"));
+            
+            //string pathXML = "F:/data/files/FISdatafiles/FISdata" + yr + mnth + dy + ".xml";
+            string pathXML = HttpContext.Current.Server.MapPath(@"~/XML/FISdata" + yr + mnth + dy + ".xml");
+            string output = stringBuilder.ToString();
+            //File.Delete(pathXML);
+            if (File.Exists(pathXML))
+            {
+            }
+            else
+            {
+                File.WriteAllText(pathXML, output);
+            }
+
+            return output;
+        }
+
+
+
+
+        public DataTable GetVariancepartdataPT(string eqsakey, int ptsakeyx, string shiftdate)
+        {
+            // string shiftDt = "2019-02-27 00:00:00.000";
+            using (var conn = Clsdbconnection.GetConnection())
+            {
+                using (SqlCommand cmd = new SqlCommand("sp_Getpartnamef1VarianceRDataPT_11", conn))
+                {
+                    DataTable dt = new DataTable();
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.Add("@EQUIP_SAKEY", SqlDbType.Int).Value = eqsakey;
+                    cmd.Parameters.Add("@PART_TYPE_SAKEY", SqlDbType.Int).Value = ptsakeyx;
+                    cmd.Parameters.Add("@shiftdate", SqlDbType.DateTime).Value = shiftdate;
+
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    conn.Open();
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    da.Fill(dt);
+                    return dt;
+                }
+            }
+        }
+
+
+        //------------- Daily Events -------------------
+        public DataTable GetRSL1(int desakey, string shifDt)
+        {
+            DateTime currentdate1 = Convert.ToDateTime(shifDt.ToString());
+            DataTable Dt = new DataTable();
+            qry = "SELECT ENTRYDATE, ENTEREDBY, EVENT FROM DE_EVENTS" +
+                  " WHERE (DE_SAKEY IN ('" + desakey + "',42) OR COPYDEPT1=('" + desakey + "') " +
+                  "OR COPYDEPT2=('" + desakey + "') OR COPYDEPT3=('" + desakey + "')) " +
+                  "AND (EntryDate >='" + currentdate1 + "'" +
+                  " OR KEEPITEM = 'Y') ORDER BY ENTRYDATE";
+            Dt = cls.GetQryResult(qry);
+            return Dt;
+        }
+
+
+        // ----------------- Waste Walk ---------------
+        public DataTable GetRSS1()
+        {
+            DataTable Dt = new DataTable();
+            qry = "SELECT * FROM SAFETY_METRICS WHERE ACTIVE='1'";
+            Dt = cls.GetQryResult(qry);
+            return Dt;
+        }
+
+
+        // ----------------- Waste Walk ---------------
+        public DataTable GetRSS1A(int metsakey, string endweek)
+        {
+            DataTable Dt = new DataTable();
+            qry = "SELECT * FROM SAFETY_REPORT_DATA WHERE METRIC_SAKEY = '" + metsakey + "' AND ENDWEEK = '" + endweek + "'";
+            Dt = cls.GetQryResult(qry);
+            return Dt;
+        }
+
+
+
+        // ----------------- Get DE_WW_TEAM Waste Walk ---------------
+        public DataTable GetRSA(int desakey)
+        {
+            DataTable Dt = new DataTable();
+            qry = "SELECT * FROM DE_WW_TEAM" +
+                  " WHERE de_sakey = '" + desakey + "'" +
+                  " ORDER BY Team_description";
+            Dt = cls.GetQryResult(qry);
+
+            return Dt;
+        }
+
+        // ----------------- Waste Walk ---------------
+        public DataTable GetRSA1(string EndWeek, int workgroup)
+        {
+            DateTime endweek = Convert.ToDateTime(EndWeek.ToString());
+            DataTable Dt = new DataTable();
+            qry = "SELECT DISTINCT * FROM WWLast6Weeks WHERE WEEKEND='" + endweek + "'" +
+                   " AND Workgroup_sakey= '" + workgroup + "'";
+            Dt = cls.GetQryResult(qry);
+            return Dt;
+        }
+
+
+        // ----------------- Delivery - Production Summary ---------------
+        public DataTable GetRSE1(int desakey)
+        {
+            DataTable Dt = new DataTable();
+            qry = "SELECT pt.PART_TYPE_NAME, c.PART_TYPE_SAKEY" +
+                    " FROM BL_PART_TYPE pt, COMPONENT c" +
+                    " WHERE pt.PART_TYPE_SAKEY=c.PART_TYPE_SAKEY AND c.DE_SAKEY='" + desakey + "'" +
+                    " ORDER BY c.VARORDER";
+            Dt = cls.GetQryResult(qry);
+            return Dt;
+        }
+
+
+        // ----------------- Delivery - Production Summary ---------------
+        public DataTable GetRSE2(int desakey, int ptsakey, string shiftDt)
+        {
+            DateTime currentdate = Convert.ToDateTime(shiftDt.ToString());
+            DataTable Dt = new DataTable();
+            qry = "SELECT * FROM FPS_DATA_ENTRY WHERE DE_SAKEY='" + desakey + "' AND COMP_SAKEY='" + ptsakey + "'" +
+                " AND DATEID = '" + currentdate + "' ORDER BY SHIFT";
+            Dt = cls.GetQryResult(qry);
+            return Dt;
+        }
+
+
+        // ----------------- Delivery - Production Summary ---------------
+        public DataTable GetRSE4(int desakey, string shiftDt)
+        {
+            DateTime currentdate = Convert.ToDateTime(shiftDt.ToString());
+            DataTable Dt = new DataTable();
+            qry = "SELECT v.DAILYHRS, v.DAILYPARTS, p.DIVISOR, p.HRS_DIVISOR FROM DAILY_PARAMETERS p, DAILY_PROD_VALUES v" +
+                  " WHERE p.DE_SAKEY=v.DE_SAKEY AND p.COMP_SAKEY=v.COMP_SAKEY" +
+                  " AND p.TXN_DATE=v.DATEID AND p.DE_SAKEY='" + desakey + "'" +
+                    " AND p.TXN_DATE='" + currentdate + "'";
+            Dt = cls.GetQryResult(qry);
+            return Dt;
+        }
+
+        // ----------------- Delivery - Production Summary ---------------
+        public DataTable GetDE_TEAM(int desakey)
+        {
+            DataTable Dt = new DataTable();
+            qry = "SELECT * FROM DE_TEAM WHERE DE_SAKEY='" + desakey + "'";
+            Dt = cls.GetQryResult(qry);
+            return Dt;
+        }
+
+    }
+}
+
+
+

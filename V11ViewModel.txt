@@ -1,0 +1,71 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Web;
+
+namespace FPS_Measurables.Areas.LIMA.Models
+{
+    public class VarianceViewModal
+    {
+        public HtmlString strcaltable { get; set; }
+        public HtmlString strConstraintsTbl { get; set; }
+
+        public VarianceTitle VarianceTitles1 { get; set; }
+
+        public IEnumerable<VarianceOHSIMCases> varianceOHSIMCases1 { get; set; }
+
+        public IEnumerable<VarianceMachiningRejects> VarianceMachiningRejects1 { get; set; }
+
+        public IEnumerable<VarianceMPALDelivery> VarianceMPALDelivery1 { get; set; }
+
+        public IEnumerable<VarianceCompliance> VarianceCompliance1 { get; set; }
+
+        public IEnumerable<VarianceProdSummaryBase> VarianceProdSummaryBase1 { get; set; }
+
+        public VarianceWasteWalkHeader VarianceWasteWalkHeader1 { get; set; }
+
+        public IEnumerable<VarianceGetPartsOnHold> VarianceGetPartsOnHold1 { get; set; }
+
+        public IEnumerable<VarianceDailyEvents> VarianceDailyEvents1 { get; set; }
+
+        public IEnumerable<VarianceManualDownTime> VarianceManualDownTime1 { get; set; }
+
+        public IEnumerable<Varaiance1stTTRejection> Varaiance1stTTRejection1 { get; set; }
+
+        public IEnumerable<Variance1stTTRejectionCycleCount> Variance1stTTRejectionCycleCount { get; set; }
+        public IEnumerable<Variance1stFTTSummary> Variance1stFTTSummary { get; set; }
+        public IEnumerable<Variance1stTTFTTPercentage> Variance1stTTFTTPercentage { get; set; }
+
+        public Parts Variance1stFTTparts { get; set; }
+
+
+        public IEnumerable<VarianceProdSum> VarianceProdSum1 { get; set; }
+
+        public VarianceOverallJPH VarianceOverallJPH1 { get; set; }
+
+        public IEnumerable<Variancepartname> Variancepartname1 { get; set; }
+
+        public IEnumerable<VarianceWeekPS> VarianceWeekPS1 { get; set; }
+
+        public VarianceWeekPSControlHrs VarianceWeekPSControlHrs1 { get; set; }
+
+        public VarianceWeekPSJPH VarianceWeekPSJPH1 { get; set; }
+
+        public IEnumerable<VarianceWasteWalkWgSakey> VarianceWasteWalkWgSakey { get; set; }
+
+        public IEnumerable<VarianceWeekPSschedule> VarianceWeekPSschedules { get; set; }
+
+        public IEnumerable<VarianceWeekPSdelta> VarianceWeekPSdeltas { get; set; }
+
+        public string strLtype { get; set; }
+
+        public HtmlString HtmltblDailyEvnts { get; set; }
+
+        public HtmlString HTmlStrWasteWalk { get; set; }
+
+        public HtmlString HtmlDelProdSum { get; set; }
+
+       
+         
+    }
+}
